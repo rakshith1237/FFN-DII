@@ -44,3 +44,8 @@ next-env.d.ts
 create-next-app@latest
 setup-files.ps1
 setup.js
+.vercel
+.env*.local
+
+apps/**/node_modules/
+apps/**/dist/
