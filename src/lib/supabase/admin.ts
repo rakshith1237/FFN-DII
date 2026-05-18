@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/ssr'
+﻿import { createClient } from '@supabase/supabase-js'
 
 /**
  * SERVICE ROLE CLIENT — SERVER ONLY
