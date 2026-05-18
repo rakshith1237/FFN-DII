@@ -1,0 +1,43 @@
+﻿name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  ci:
+    name: CI — 5 Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 1 — Install (npm ci)
+        run: npm ci
+
+      - name: 2 — Security audit (SCA)
+        run: npm audit --audit-level=high
+
+      - name: 3 — TypeScript check
+        run: npx tsc --noEmit
+
+      - name: 4 — Unit tests
+        run: npx vitest run
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: 5 — SAST scan (Semgrep)
+        run: |
+          pip install semgrep --quiet
+          semgrep --config=.semgrep.yml src/ --error

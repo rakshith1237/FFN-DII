@@ -1,0 +1,13 @@
+rules:
+  - id: no-any-type
+    patterns:
+      - pattern: ": any"
+    message: "TypeScript 'any' type is prohibited. Use specific types."
+    languages: [typescript, tsx]
+    severity: ERROR
+  - id: no-console-log
+    patterns:
+      - pattern: console.log(...)
+    message: "Remove console.log. Use structured logging."
+    languages: [typescript, tsx]
+    severity: WARNING
