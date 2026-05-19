@@ -21,6 +21,12 @@ export async function suspendTenant(
   const supabaseAdmin = createAdminClient(
     process.env['NEXT_PUBLIC_SUPABASE_URL']!,
     process.env['SUPABASE_SERVICE_ROLE_KEY']!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
   )
 
   const { data: tenant, error: fetchError } = await supabaseAdmin

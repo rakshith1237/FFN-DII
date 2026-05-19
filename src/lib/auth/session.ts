@@ -29,8 +29,16 @@ export async function getPersonaCode(): Promise<string | null> {
   const session = await getSession()
   if (!session) return null
   const payload = decodeJwtPayload(session.access_token)
-  const value = payload['persona_code']
-  return typeof value === 'string' ? value : null
+  const fromJwt = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
+  if (fromJwt !== null && fromJwt !== 'unprovisioned') return fromJwt
+  // Fallback: JWT hook disabled — query profile directly
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('x_ffn_user_profile')
+    .select('persona_code')
+    .eq('id', session.user.id)
+    .maybeSingle()
+  return data?.persona_code ?? null
 }
 
 export async function getTenantId(): Promise<string | null> {

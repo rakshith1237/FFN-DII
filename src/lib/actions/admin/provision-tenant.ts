@@ -20,6 +20,12 @@ export async function provisionTenant(
   const supabaseAdmin = createAdminClient(
     process.env['NEXT_PUBLIC_SUPABASE_URL']!,
     process.env['SUPABASE_SERVICE_ROLE_KEY']!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
   )
 
   // Extract and validate fields
@@ -131,7 +137,8 @@ export async function provisionTenant(
   }))
   const { error: settingsError } = await supabaseAdmin.from('x_ffn_setting').insert(settingsRows)
   if (settingsError) {
-    console.error('[provisionTenant] Failed to seed settings:', settingsError)
+    console.error('[FFN][provision-tenant] Settings seed failed:', settingsError.message)
+    return { error: `Tenant created but settings seed failed: ${settingsError.message}` }
   }
 
   // Invite super admin

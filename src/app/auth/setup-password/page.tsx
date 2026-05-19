@@ -1,158 +1,190 @@
 'use client'
 
-import { useActionState, useState } from 'react'
-import { setupPassword, type AuthActionState } from '../actions'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Eye, EyeOff, CheckCircle2, Circle, Loader2, AlertCircle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
-function checkRules(pw: string): {
-  length: boolean
-  upper: boolean
-  lower: boolean
-  number: boolean
-  special: boolean
-} {
-  return {
-    length: pw.length >= 12,
-    upper: /[A-Z]/.test(pw),
-    lower: /[a-z]/.test(pw),
-    number: /[0-9]/.test(pw),
-    special: /[^A-Za-z0-9]/.test(pw),
-  }
-}
-
-function strengthScore(pw: string): number {
-  return Object.values(checkRules(pw)).filter(Boolean).length
-}
-
-function strengthLabel(score: number): string {
-  return ['', 'Too weak', 'Weak', 'Fair', 'Good', 'Strong'][score] ?? ''
-}
-
-function strengthColor(score: number): string {
-  return (
-    ['bg-[#E5E7EB]', 'bg-[#DC2626]', 'bg-[#D97706]', 'bg-[#F59E0B]', 'bg-[#16A34A]', 'bg-[#16A34A]'][score] ??
-    'bg-[#E5E7EB]'
-  )
-}
-
-const inputClassName =
-  'w-full h-10 px-3 text-sm border border-[#E5E7EB] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors'
+const RULES = [
+  { id: 'length',  label: '8 or more characters', test: (p: string) => p.length >= 8 },
+  { id: 'upper',   label: '1 uppercase letter',   test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'number',  label: '1 number',              test: (p: string) => /[0-9]/.test(p) },
+  { id: 'special', label: '1 special character',  test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+] as const
 
 export default function SetupPasswordPage() {
-  const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
-    setupPassword,
-    {},
-  )
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [email, setEmail] = useState<string>('')
 
-  const score = strengthScore(password)
-  const rules = checkRules(password)
-  const allRulesMet = score === 5
+  const ruleResults = RULES.map(r => ({ ...r, passed: r.test(password) }))
+  const allRulesPassed = ruleResults.every(r => r.passed)
+  const passwordsMatch = password === confirmPassword && confirmPassword.length > 0
+  const canSubmit = allRulesPassed && passwordsMatch && !isPending
 
-  if (state.success) {
-    return (
-      <>
-        <h1 className="text-2xl font-semibold text-[#0F2147] mb-2">Set up your password</h1>
-        <div className="bg-[#DCFCE7] border border-[#16A34A] text-[#166534] rounded-md p-4 text-sm space-y-2">
-          <p>{state.success}</p>
-          <Link href="/auth/login" className="font-medium underline hover:no-underline">
-            Sign in now →
-          </Link>
-        </div>
-      </>
-    )
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    if (emailParam) setEmail(decodeURIComponent(emailParam))
+  }, [searchParams])
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
+    e.preventDefault()
+    if (!canSubmit) return
+    setError(null)
+    setIsPending(true)
+    try {
+      const supabase = createClient()
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) { setError(updateError.message); return }
+      setSuccess(true)
+      setTimeout(() => router.push('/flexadmin/dashboard'), 2000)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setIsPending(false)
+    }
   }
 
+  if (success) return (
+    <div className="text-center py-4">
+      <div className="w-16 h-16 rounded-full bg-[#DCFCE7] flex items-center justify-center mx-auto mb-4">
+        <CheckCircle2 size={32} className="text-[#16A34A]" />
+      </div>
+      <h2 className="text-[20px] font-bold text-[#0F2147] mb-2">Account Activated</h2>
+      <p className="text-sm text-[#6B7280]">Redirecting to your dashboard…</p>
+    </div>
+  )
+
   return (
-    <>
-      <h1 className="text-2xl font-semibold text-[#0F2147] mb-2">Set up your password</h1>
-      <p className="text-sm text-[#6B7280] mb-8">
-        Create a secure password that meets all requirements.
+    <div>
+      {/* Role indicator */}
+      <p className="text-[14px] italic text-[#6B7280] text-center mb-6">
+        Activating your account
       </p>
 
-      <form action={formAction} className="space-y-5">
+      <h1 className="text-[20px] font-bold text-[#0F2147] mb-6">Set Your Password</h1>
+
+      {/* Email read-only */}
+      {email && (
+        <div className="mb-5">
+          <p className="text-[13px] font-bold text-[#374151] mb-1">Email Address</p>
+          <p className="text-[14px] text-[#374151]">{email}</p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* New password */}
         <div>
-          <label htmlFor="newPassword" className="block text-sm font-medium text-[#374151] mb-1.5">
-            New password
+          <label htmlFor="password" className="block text-[13px] font-bold text-[#374151] mb-1.5">
+            New Password <span className="text-[#DC2626]" aria-hidden="true">*</span>
           </label>
-          <input
-            id="newPassword"
-            name="newPassword"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClassName}
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter a strong password"
+              className="w-full h-10 px-3 pr-10 text-sm border border-[#D1D5DB] rounded-[6px] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(p => !p)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#374151]"
+              aria-label={showPassword ? 'Hide' : 'Show'}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
 
-          {password.length > 0 && (
-            <div className="mt-2 space-y-2">
-              <div className="flex gap-1">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 flex-1 rounded-full transition-colors ${i < score ? strengthColor(score) : 'bg-[#E5E7EB]'}`}
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-[#6B7280]">{strengthLabel(score)}</p>
-            </div>
-          )}
+          {/* Rules checklist — updates on every keystroke */}
+          <ul className="mt-3 space-y-1.5" aria-label="Password requirements">
+            {ruleResults.map(rule => (
+              <li key={rule.id} className="flex items-center gap-2">
+                {rule.passed
+                  ? <CheckCircle2 size={12} className="text-[#16A34A] shrink-0" />
+                  : <Circle       size={12} className="text-[#9CA3AF] shrink-0" />
+                }
+                <span className={`text-[12px] ${rule.passed ? 'text-[#16A34A]' : 'text-[#6B7280]'}`}>
+                  {rule.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-          {password.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs">
-              {(
-                [
-                  [rules.length, 'At least 12 characters'],
-                  [rules.upper, 'Uppercase letter'],
-                  [rules.lower, 'Lowercase letter'],
-                  [rules.number, 'Number'],
-                  [rules.special, 'Special character'],
-                ] as [boolean, string][]
-              ).map(([met, label]) => (
-                <li key={label} className={met ? 'text-[#16A34A]' : 'text-[#DC2626]'}>
-                  {met ? '✓' : '✗'} {label}
-                </li>
-              ))}
-            </ul>
+        {/* Confirm password */}
+        <div>
+          <label htmlFor="confirmPassword" className="block text-[13px] font-bold text-[#374151] mb-1.5">
+            Confirm Password <span className="text-[#DC2626]" aria-hidden="true">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="confirmPassword"
+              type={showConfirm ? 'text' : 'password'}
+              required
+              value={confirmPassword}
+              onChange={(e) => { setConfirmPassword(e.target.value); setConfirmError(null) }}
+              onBlur={() => {
+                if (confirmPassword && confirmPassword !== password) {
+                  setConfirmError('Passwords do not match.')
+                }
+              }}
+              placeholder="Re-enter your password"
+              className={`w-full h-10 px-3 pr-10 text-sm border rounded-[6px] bg-white text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-colors ${confirmError ? 'border-[#DC2626]' : 'border-[#D1D5DB]'}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(p => !p)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#374151]"
+              aria-label={showConfirm ? 'Hide' : 'Show'}
+            >
+              {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {confirmError && (
+            <p className="mt-1 text-[12px] text-[#DC2626]" role="alert">{confirmError}</p>
           )}
         </div>
 
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-[#374151] mb-1.5"
-          >
-            Confirm password
-          </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            required
-            className={inputClassName}
-          />
-        </div>
-
-        {state.error && (
+        {/* Server error */}
+        {error && (
           <div
             role="alert"
             aria-live="polite"
-            aria-atomic="true"
-            className="text-sm text-[#DC2626] flex items-center gap-1.5"
+            className="flex items-start gap-3 p-3.5 bg-[#FEE2E2] border-l-4 border-[#DC2626] rounded-[6px]"
           >
-            {`⚠ ${state.error}`}
+            <AlertCircle size={16} className="text-[#DC2626] mt-0.5 shrink-0" />
+            <p className="text-[12px] text-[#991B1B]">{error}</p>
           </div>
         )}
 
+        {/* Submit — disabled until all rules pass + passwords match */}
         <button
           type="submit"
-          disabled={isPending || !allRulesMet}
-          className="w-full h-11 bg-[#0F2147] text-white text-sm font-medium rounded-md hover:bg-[#1a3366] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2"
+          disabled={!canSubmit}
+          className={`w-full h-11 text-white text-[14px] font-bold rounded-[6px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 flex items-center justify-center gap-2 ${canSubmit ? 'bg-[#0F2147] hover:bg-[#1a3460] cursor-pointer' : 'bg-[#D1D5DB] cursor-not-allowed'}`}
         >
-          {isPending ? 'Updating…' : 'Set password'}
+          {isPending && <Loader2 size={16} className="animate-spin" />}
+          {isPending ? 'Activating…' : 'Activate Account'}
         </button>
+
+        {/* Terms */}
+        <p className="text-center text-[12px] italic text-[#9CA3AF]">
+          By activating your account, you agree to FlexForceNow{' '}
+          <span className="underline cursor-pointer">Terms of Service</span> and{' '}
+          <span className="underline cursor-pointer">Privacy Policy</span>.
+        </p>
       </form>
-    </>
+    </div>
   )
 }
