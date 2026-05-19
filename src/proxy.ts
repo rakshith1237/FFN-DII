@@ -83,11 +83,14 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith('/auth/') && session && personaCode !== null) {
-    const homeRoute =
-      (personaCode !== null ? PERSONA_HOME_ROUTES[personaCode] : undefined) ?? '/auth/login'
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = homeRoute
-    return NextResponse.redirect(redirectUrl)
+    const homeRoute = PERSONA_HOME_ROUTES[personaCode]
+    if (homeRoute !== undefined && homeRoute !== pathname) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = homeRoute
+      return NextResponse.redirect(redirectUrl)
+    }
+    // No valid home route found — let the user through to auth pages
+    // This handles: unprovisioned users, unknown persona codes, test accounts
   }
 
   return supabaseResponse
