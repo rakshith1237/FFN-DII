@@ -19,8 +19,9 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
     const part = token.split('.')[1]
     if (!part) return {}
-    const padded = part + '=='.slice((part.length + 2) % 4 > 0 ? (part.length + 2) % 4 : 4)
-    return JSON.parse(atob(padded.replace(/-/g, '+').replace(/_/g, '/'))) as Record<string, unknown>
+    const base64 = part.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
+    return JSON.parse(atob(padded)) as Record<string, unknown>
   } catch {
     return {}
   }
