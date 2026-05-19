@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { RefreshCw, Inbox, AlertCircle, CheckCircle2, X, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -24,6 +25,7 @@ interface VmsInboxClientProps {
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected' | 'failed'
 
 export default function VmsInboxClient({ initialRecords, tenantId }: VmsInboxClientProps) {
+  const router = useRouter()
   const [records, setRecords]           = useState<VmsInboxRecord[]>(initialRecords)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedItem, setSelectedItem] = useState<VmsInboxRecord | null>(null)
@@ -95,6 +97,7 @@ export default function VmsInboxClient({ initialRecords, tenantId }: VmsInboxCli
     setSelectedItem(null)
     setEditedFields({})
     showToast('Item accepted — Draft JD created', 'success')
+    if (result.jdId) router.push(`/partner/jd/${result.jdId}/edit`)
   }
 
   async function handleReject() {

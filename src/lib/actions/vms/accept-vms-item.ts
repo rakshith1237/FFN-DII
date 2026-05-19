@@ -21,6 +21,19 @@ export async function acceptVmsItem(
   const tenantId = await getTenantId()
   if (!tenantId) return { error: 'Tenant context missing.' }
 
+  // BR-VMS-004: Only Pending items can be accepted
+  const { data: inbox, error: inboxFetchError } = await supabaseAdmin
+    .from('x_ffn_vms_inbox')
+    .select('parse_status')
+    .eq('id', inboxId)
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (inboxFetchError || !inbox) return { error: 'Inbox record not found.' }
+  if (inbox.parse_status !== 'pending') {
+    return { error: `BR-VMS-004: This item is already ${inbox.parse_status} and cannot be accepted again.` }
+  }
+
   // Validate mandatory fields
   const jobTitle  = mergedFields['job_title']?.trim()
   const startDate = mergedFields['start_date']?.trim()
