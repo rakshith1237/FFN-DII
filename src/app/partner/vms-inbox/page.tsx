@@ -1,19 +1,35 @@
-import { Inbox } from 'lucide-react'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getTenantId } from '@/lib/auth/session'
+import VmsInboxClient from '@/components/partner/vms-inbox-client'
+import { type VmsInboxRecord } from '@/lib/types/vms'
 
-export default function PartnerVmsInbox() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-[24px] font-bold text-[#0F2147]">VMS Inbox</h1>
-        <p className="text-[14px] text-[#6B7280] mt-0.5">Incoming job requirements from partner clients</p>
+const supabaseAdmin = createAdminClient(
+  process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+  process.env['SUPABASE_SERVICE_ROLE_KEY']!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
+
+export default async function VmsInboxPage() {
+  const tenantId = await getTenantId()
+
+  let records: VmsInboxRecord[] = []
+  if (tenantId) {
+    const { data } = await supabaseAdmin
+      .from('x_ffn_vms_inbox')
+      .select('id, tenant_id, sender_email, sender_domain, subject, parse_status, vms_mode, parse_confidence, extracted_data, confidence_map, parsed_jd_id, received_at, created_at')
+      .eq('tenant_id', tenantId)
+      .order('received_at', { ascending: false })
+      .limit(100)
+    records = (data as VmsInboxRecord[]) ?? []
+  }
+
+  if (!tenantId) {
+    return (
+      <div className="p-6 text-center text-[#6B7280]">
+        Unable to load inbox — tenant context missing.
       </div>
-      <div className="bg-white rounded-[8px] border border-[#E5E7EB]">
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Inbox size={40} className="text-[#D1D5DB] mb-3" />
-          <p className="text-[14px] font-medium text-[#374151]">No requirements in your inbox</p>
-          <p className="text-[13px] text-[#6B7280] mt-1">Requirements assigned to you will appear here</p>
-        </div>
-      </div>
-    </div>
-  )
+    )
+  }
+
+  return <VmsInboxClient initialRecords={records} tenantId={tenantId} />
 }
