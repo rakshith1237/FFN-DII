@@ -82,7 +82,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith('/auth/') && session) {
+  if (pathname.startsWith('/auth/') && session && personaCode !== null) {
     const homeRoute =
       (personaCode !== null ? PERSONA_HOME_ROUTES[personaCode] : undefined) ?? '/auth/login'
     const redirectUrl = request.nextUrl.clone()
