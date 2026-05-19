@@ -18,6 +18,8 @@
         "@supabase/ssr": "^0.10.3",
         "@supabase/supabase-js": "^2.105.4",
         "@tanstack/react-query": "^5.100.10",
+        "@upstash/ratelimit": "^2.0.8",
+        "@upstash/redis": "^1.38.0",
         "bullmq": "^5.76.10",
         "date-fns": "^4.2.1",
         "ioredis": "^5.10.1",
@@ -26,6 +28,7 @@
         "react": "19.2.4",
         "react-dom": "19.2.4",
         "resend": "^6.12.3",
+        "tailwindcss-animate": "^1.0.7",
         "zod": "^4.4.3"
     },
     "devDependencies": {
