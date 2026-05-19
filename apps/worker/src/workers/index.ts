@@ -15,7 +15,7 @@ export function createAllWorkers(): WorkerInstance[] {
       processor = async (job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
         if (job.name === 'parse_vms') {
           const { inboxId, tenantId } = job.data as { inboxId: string; tenantId: string };
-          const { parseVmsEmail } = await import('../../../../src/lib/ai/vms-parser');
+          const { parseVmsEmail } = await import('../lib/ai/vms-parser');
           await parseVmsEmail(inboxId, tenantId);
           return { parsed: true, inboxId };
         }
