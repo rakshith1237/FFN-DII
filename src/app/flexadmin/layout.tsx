@@ -1,14 +1,12 @@
 import React from 'react'
-import { requirePersona } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function FlexAdminLayout({ children }: { children: React.ReactNode }) {
-  try {
-    await requirePersona(['flex_admin'])
-  } catch {
-    redirect('/auth/login')
-  }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
   return (
     <div className="min-h-screen flex bg-[#F9FAFB]">

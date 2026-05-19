@@ -40,7 +40,9 @@ export default function LoginPage() {
     setIsPending(true)
     try {
       const supabase = createClient()
+      console.log('FFN: attempting sign in for', email)
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      console.log('FFN: signIn result', { error: signInError?.message, hasSession: !!data?.session, userId: data?.session?.user?.id })
       if (signInError || !data.session) {
         setError(
           signInError?.message === 'Email not confirmed'
@@ -50,7 +52,19 @@ export default function LoginPage() {
         return
       }
       const payload = decodeJwtPayload(data.session.access_token)
-      const personaCode = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
+      let personaCode = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
+
+      if (personaCode === null || personaCode === 'unprovisioned') {
+        const supabaseFallback = createClient()
+        const { data: profileData } = await supabaseFallback
+          .from('x_ffn_user_profile')
+          .select('persona_code')
+          .eq('id', data.session.user.id)
+          .maybeSingle()
+        personaCode = profileData?.persona_code ?? null
+      }
+      console.log('FFN: profile fallback result', { personaCode, homeRoute: personaCode ? PERSONA_HOME_ROUTES[personaCode] : null })
+
       const homeRoute = personaCode !== null ? (PERSONA_HOME_ROUTES[personaCode] ?? null) : null
       if (homeRoute !== null) {
         router.push(homeRoute)
