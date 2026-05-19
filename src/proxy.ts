@@ -3,22 +3,18 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const ROUTE_PERSONA_MAP: Record<string, string[]> = {
   '/flexadmin': ['flex_admin'],
-  '/partner/hiring': ['p_super_admin', 'p_hiring_manager'],
-  '/partner/recruiter': ['p_super_admin', 'p_recruiter'],
-  '/partner': ['p_super_admin', 'p_hiring_manager', 'p_recruiter'],
-  '/agency/manager': ['a_super_admin', 'a_recruiting_manager'],
-  '/agency/recruiter': ['a_super_admin', 'a_recruiter'],
-  '/agency': ['a_super_admin', 'a_recruiting_manager', 'a_recruiter'],
+  '/partner':   ['p_super_admin', 'p_hiring_manager', 'p_recruiter'],
+  '/agency':    ['a_super_admin', 'a_recruiting_manager', 'a_recruiter'],
 }
 
 const PERSONA_HOME_ROUTES: Record<string, string> = {
-  flex_admin: '/flexadmin/dashboard',
-  p_super_admin: '/partner/dashboard',
-  p_hiring_manager: '/partner/hiring/dashboard',
-  p_recruiter: '/partner/recruiter/dashboard',
-  a_super_admin: '/agency/dashboard',
-  a_recruiting_manager: '/agency/manager/dashboard',
-  a_recruiter: '/agency/recruiter/dashboard',
+  flex_admin:           '/flexadmin/dashboard',
+  p_super_admin:        '/partner/dashboard',
+  p_hiring_manager:     '/partner/dashboard',
+  p_recruiter:          '/partner/vms-inbox',
+  a_super_admin:        '/agency/dashboard',
+  a_recruiting_manager: '/agency/dashboard',
+  a_recruiter:          '/agency/requirements',
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
