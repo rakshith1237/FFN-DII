@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest) {
         loginUrl.searchParams.set('redirect', pathname)
         return NextResponse.redirect(loginUrl)
       }
-      if (!personaCode || !allowedPersonas.includes(personaCode)) {
+      if (personaCode && !allowedPersonas.includes(personaCode)) {
         const homeRoute =
           (personaCode !== null ? PERSONA_HOME_ROUTES[personaCode] : undefined) ?? '/auth/login'
         const redirectUrl = request.nextUrl.clone()

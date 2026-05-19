@@ -2,7 +2,6 @@
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { requirePersona } from '@/lib/auth/session'
-import { CANONICAL_SETTINGS } from '@/lib/settings/defaults'
 
 export type ProvisionTenantState = {
   error?: string
@@ -124,20 +123,11 @@ export async function provisionTenant(
     return { error: 'Failed to create tenant. Please try again.' }
   }
 
-  // Seed 37 settings (tier=2)
-  const settingsRows = CANONICAL_SETTINGS.map(s => ({
-    tenant_id: tenant.id,
-    user_id: null,
-    tier: 2,
-    key: s.key,
-    value: s.value,
-    data_type: s.data_type,
-    description: s.description,
-    is_sensitive: false,
-  }))
-  const { error: settingsError } = await supabaseAdmin.from('x_ffn_setting').insert(settingsRows)
+  const { error: settingsError } = await supabaseAdmin.rpc('seed_tenant_settings', {
+    p_tenant_id: tenant.id,
+  })
   if (settingsError) {
-    console.error('[FFN][provision-tenant] Settings seed failed:', settingsError.message)
+    console.error('[FFN][provision-tenant] Settings RPC failed:', settingsError.message)
     return { error: `Tenant created but settings seed failed: ${settingsError.message}` }
   }
 
