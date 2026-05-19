@@ -5,6 +5,7 @@
 ## Sprint 3 Gate — WBS #21 — 2026-05-19
 **Persona:** QA Lead + Security Engineer
 **Decision:** CONDITIONAL PASS
+**Commit:** bee1701
 
 ---
 
@@ -35,25 +36,19 @@
 | TC-INT-001 | Full end-to-end: Mailgun ? Inbox ? Accept ? JD ? Publish | All above blockers | Final test in WBS #22 |
 | ZAP-DOCKER | Full OWASP ZAP baseline scan | Docker not installed | Install Docker Desktop in WBS #22 |
 
-### Open Bugs (all P2 — no P0/P1)
+### Bug Register — Final Status
 
-| # | Bug | Root Cause | Fix Sprint |
+| # | Bug | Root Cause | Status |
 |---|---|---|---|
-| B-025 | JWT hook no-op — persona_code absent from JWT | Supabase hook free-tier limitation | WBS #22 |
-| B-027 | 36 settings seeded vs 37 canonical | 37th key not identified in FRD | WBS #22 |
-| B-028 | x_ffn_vms_inbox failed-domain row not inserting | null tenant_id violates NOT NULL | WBS #22 |
-| B-029 | Persona-dependent gate tests deferred | No real P-SA/P-HM/P-Rec accounts | WBS #22 |
-| B-030 | x_ffn_audit_log HMAC failure not persisting | null tenant_id violates NOT NULL | WBS #22 |
-
-### Gate Rationale
-Zero P0/P1 defects. Zero unmitigated High security findings.
-RLS confirmed on all 6 core tables. HMAC rejection confirmed working.
-Deferred tests are infrastructure-blocked (no persona accounts, no Render deploy)
-not code-defect-blocked. All deferred code is written, committed, TypeScript clean.
-FORGE SDLC permits Conditional PASS when deferrals are infrastructure-blocked.
+| B-025 | JWT hook no-op — persona_code absent from JWT | Supabase hook free-tier limitation | Open — WBS #22 |
+| B-027 | 36 settings seeded vs 37 canonical | 37th key not identified in FRD | Open — WBS #22 |
+| B-028 | x_ffn_vms_inbox failed-domain row not inserting | null tenant_id NOT NULL constraint | CLOSED — ALTER TABLE applied, row confirmed in DB |
+| B-029 | Persona-dependent gate tests deferred | No real P-SA/P-HM/P-Rec accounts | Open — WBS #22 |
+| B-030 | x_ffn_audit_log HMAC failure not persisting | null tenant_id NOT NULL constraint | CLOSED — ALTER TABLE applied, audit row confirmed in DB |
 
 ### Gate Condition
-WBS #22 must close B-028, B-030, and B-029 before Sprint 3 is fully signed off.
+B-029 must close in WBS #22 before Sprint 3 is fully signed off.
+B-028 and B-030 are CLOSED as of commit bee1701.
 
 ### Sign-off
 Recorded by: QA Lead + Security Engineer
