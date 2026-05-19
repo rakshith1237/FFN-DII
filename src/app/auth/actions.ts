@@ -1,12 +1,11 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit } from '@/lib/auth/ratelimit'
 import { PERSONA_HOME_ROUTES } from '@/lib/auth/constants'
 
-export type AuthActionState = { error?: string; success?: string }
+export type AuthActionState = { error?: string; success?: string; redirectTo?: string }
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
   try {
@@ -53,7 +52,7 @@ export async function signIn(
     const raw = payload['persona_code']
     const personaCode = typeof raw === 'string' ? raw : null
     const homeRoute = (personaCode !== null ? PERSONA_HOME_ROUTES[personaCode] : undefined) ?? '/auth/login'
-    redirect(homeRoute)
+    return { redirectTo: homeRoute }
   }
 
   return { error: 'Sign in failed. Please try again.' }

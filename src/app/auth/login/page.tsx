@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { signIn, type AuthActionState } from '../actions'
 import Link from 'next/link'
 
@@ -8,6 +9,13 @@ const initialState: AuthActionState = {}
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(signIn, initialState)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (state.redirectTo) {
+      router.push(state.redirectTo)
+    }
+  }, [state.redirectTo, router])
 
   return (
     <>
