@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { ArrowLeft, Building2 } from 'lucide-react'
+import { suspendTenant } from '@/lib/actions/admin/suspend-tenant'
+import { reactivateTenant } from '@/lib/actions/admin/reactivate-tenant'
 
 type TenantRow = {
   id:                    string
@@ -141,19 +143,25 @@ export default async function TenantDetailPage({
           </div>
           <div className="flex gap-2 shrink-0">
             {tenant.status === 'active' ? (
-              <Link
-                href={`/flexadmin/tenants/${tenant.id}/suspend`}
-                className="px-4 py-2 text-[13px] font-semibold text-[#DC2626] border border-[#DC2626] rounded-[6px] hover:bg-[#FEE2E2] transition-colors"
-              >
-                Suspend Tenant
-              </Link>
+              <form action={suspendTenant}>
+                <input type="hidden" name="tenantId" value={tenant.id} />
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-[13px] font-semibold text-[#DC2626] border border-[#DC2626] rounded-[6px] hover:bg-[#FEE2E2] transition-colors"
+                >
+                  Suspend Tenant
+                </button>
+              </form>
             ) : (
-              <Link
-                href={`/flexadmin/tenants/${tenant.id}/reactivate`}
-                className="px-4 py-2 text-[13px] font-semibold text-[#16A34A] border border-[#16A34A] rounded-[6px] hover:bg-[#DCFCE7] transition-colors"
-              >
-                Reactivate Tenant
-              </Link>
+              <form action={reactivateTenant}>
+                <input type="hidden" name="tenantId" value={tenant.id} />
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-[13px] font-semibold text-[#16A34A] border border-[#16A34A] rounded-[6px] hover:bg-[#DCFCE7] transition-colors"
+                >
+                  Reactivate Tenant
+                </button>
+              </form>
             )}
           </div>
         </div>
