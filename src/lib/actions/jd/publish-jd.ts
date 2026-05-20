@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
 import { type JdDraftInput, type GeoRule, type ScoringCriterion, saveDraftJD } from './save-draft-jd'
+import { broadcastJD } from './broadcast-jd'
 
 // GeoRule and ScoringCriterion are re-exported for consumers of this module
 export type { GeoRule, ScoringCriterion }
@@ -83,19 +84,17 @@ If no issues: { "passed": true, "flaggedTerms": [] }`,
     }
   }
 
-  // All checks passed — publish
-  const { error: publishError } = await supabaseAdmin
+  // All checks passed — mark scan and delegate publish + broadcast to broadcastJD
+  const { error: scanMarkError } = await supabaseAdmin
     .from('x_ffn_job_description')
-    .update({
-      status:                'published',
-      inclusive_scan_passed: true,
-      published_at:          new Date().toISOString(),
-      updated_at:            new Date().toISOString(),
-    })
+    .update({ inclusive_scan_passed: true, updated_at: new Date().toISOString() })
     .eq('id', input.jdId)
     .eq('tenant_id', tenantId)
 
-  if (publishError) return { error: publishError.message }
+  if (scanMarkError) return { error: scanMarkError.message }
+
+  const broadcastResult = await broadcastJD(input.jdId, tenantId, input.title.trim())
+  if (broadcastResult.error) return { error: broadcastResult.error }
 
   await supabaseAdmin.from('x_ffn_audit_log').insert({
     tenant_id:    tenantId,
@@ -104,7 +103,7 @@ If no issues: { "passed": true, "flaggedTerms": [] }`,
     action:       'jd.published',
     entity_type:  'x_ffn_job_description',
     entity_id:    input.jdId,
-    new_values:   { title: input.title },
+    new_values:   { title: input.title, broadcast_count: broadcastResult.broadcastCount ?? 0 },
     ip_address:   null,
     user_agent:   null,
   })
