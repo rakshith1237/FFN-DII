@@ -108,3 +108,52 @@ B-029 and B-031 must close before Sprint 4 is fully signed off.
 Recorded by: QA Lead + Security Engineer
 Approved by: Sai Rakshith (DivIHN Integration Inc.)
 Date: 2026-05-20
+
+---
+
+## Sprint 6 Gate — WBS #30 — 2026-05-20
+**Persona:** QA Lead + Security Engineer
+**Decision:** CONDITIONAL PASS
+**Commit:** f8b715f (WBS #29) + gate commit
+
+### Passed (10)
+
+| TC | Description | Result | Evidence |
+|---|---|---|---|
+| TC-010 | DELETE x_ffn_override_request ? exception raised | PASS | DO block + trigger confirmed |
+| TC-010b | RLS DELETE policy blocks REST API delete | PASS | polcmd=d on override_request_delete |
+| TC-058 | score_factor_snapshot immutable — trigger + code guard | PASS | trigger=1, .is('scored_at',null) line 324 |
+| TC-060 | Decision Vault DESC order by intellimatch_score | PASS | TypeScript 0 errors, code confirmed |
+| TC-061 | Override append-only record | PASS | 16 triggers + override_table confirmed |
+| TC-062 | ARM approve: status=approved + override_approved=true | PASS | approve-override.ts lines 34+47 |
+| SUB-COLS | 7 score+override columns on x_ffn_submission | PASS | sub_score_cols=7 |
+| TS-ROOT | Root TypeScript 0 errors | PASS | npx tsc --noEmit exit 0 |
+| TS-WORKER | Worker TypeScript 0 errors | PASS | npx tsc --noEmit exit 0 |
+| CI-42 | GitHub Actions CI #42 green 53s | PASS | commit f8b715f |
+
+### Deferred — B-029 (infrastructure-blocked)
+
+| TC | Description | Blocker |
+|---|---|---|
+| TC-057 | IntelliMatch auto-scored on submission creation | Render worker + real submission needed |
+| TC-059 | Explainability drawer: factor bars, weights, AI explanation | P-HM browser session needed |
+| TC-063 | Override Analytics correct counts | Real override data + browser needed |
+| ADR-007 | Demo Run 1 & 2 full sequence | All 6 persona accounts needed |
+
+### Bug Register — Sprint 6 Final
+
+| # | Bug | Priority | Status |
+|---|---|---|---|
+| B-025 | JWT hook no-op — proxy.ts SOFT MODE | P2 | Open |
+| B-029 | No persona accounts | P1 | Open — closes deferred tests |
+| B-032 | DOCUSIGN_CONNECT_HMAC_KEY placeholder | P2 | Open |
+| B-033 | create-send-rtr.ts recruiter_id placeholder | P2 | Open |
+| B-005 | Credly API approval | P3 | Open |
+
+### Gate Condition
+B-029 closes all deferred tests. No code gaps exist.
+
+### Sign-off
+Recorded by: QA Lead + Security Engineer
+Approved by: Sai Rakshith (DivIHN Integration Inc.)
+Date: 2026-05-20
