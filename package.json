@@ -28,6 +28,7 @@
         "@upstash/redis": "^1.38.0",
         "bullmq": "^5.76.10",
         "date-fns": "^4.2.1",
+        "docusign-esign": "^9.0.0",
         "ioredis": "^5.10.1",
         "lucide-react": "^1.16.0",
         "mammoth": "^1.12.0",

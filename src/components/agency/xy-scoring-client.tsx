@@ -2,6 +2,7 @@
 
 import { useState, useMemo }   from 'react'
 import Link                    from 'next/link'
+import { useRouter }           from 'next/navigation'
 import {
   ScatterChart, Scatter, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -88,6 +89,8 @@ export default function XyScoringClient({
   const [selectedId, setSelectedId] = useState<string | null>(
     scoredCandidates[0]?.candidate_id ?? null
   )
+
+  const router = useRouter()
 
   const chartData = useMemo((): ChartEntry[] => {
     return scoredCandidates.map(sc => {
@@ -426,8 +429,8 @@ export default function XyScoringClient({
                   type="button"
                   disabled={assignment.quota_remaining <= 0}
                   onClick={() => {
-                    // Submission flow — WBS #26
-                    alert('Submission flow coming in WBS #26')
+                    if (!selectedBench) return
+                    router.push(`/agency/rtr/${selectedBench.candidate_id}/${jd.id}`)
                   }}
                   className={`px-6 py-2.5 text-[13px] font-semibold text-white rounded-[6px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8531E] ${
                     assignment.quota_remaining > 0
