@@ -107,6 +107,7 @@ export async function broadcastJD(
     tier:                1,
     status:              'pending',
     sent_at:             now.toISOString(),
+    sla_deadline:        new Date(now.getTime() + agencySlaHours * 3600000).toISOString(),
     hold_window_ends_at: tier1HoldHours
       ? new Date(now.getTime() + tier1HoldHours * 3600000).toISOString()
       : null,

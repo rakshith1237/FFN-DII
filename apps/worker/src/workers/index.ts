@@ -9,7 +9,7 @@ type TierEscalationResult =
   | { escalated: true; tier: number; agencyCount: number };
 
 type WorkerResult =
-  | { processed: boolean }
+  | { processed: boolean | number }
   | { parsed: boolean; inboxId: string }
   | TierEscalationResult;
 
@@ -135,6 +135,47 @@ export function createAllWorkers(): WorkerInstance[] {
 
         console.log(`[FFN Worker] Processing ${queueName}: ${job.id}`);
         return { processed: true };
+      };
+    } else if (queueName === QUEUES.SLA_MONITOR) {
+      processor = async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+        const supabaseAdmin = createAdminClient(
+          process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+          process.env['SUPABASE_SERVICE_ROLE_KEY']!,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        const now = new Date().toISOString();
+        const { data: breached } = await supabaseAdmin
+          .from('x_ffn_jd_broadcast')
+          .select('id, jd_id, agency_tenant_id, tenant_id')
+          .eq('status', 'pending')
+          .eq('sla_breached', false)
+          .lt('sla_deadline', now);
+
+        if (!breached || breached.length === 0) return { processed: 0 };
+
+        const ids = breached.map(r => r.id);
+        await supabaseAdmin
+          .from('x_ffn_jd_broadcast')
+          .update({ sla_breached: true })
+          .in('id', ids);
+
+        await supabaseAdmin.from('x_ffn_audit_log').insert(
+          breached.map(r => ({
+            tenant_id:    r.tenant_id,
+            actor_id:     null,
+            persona_code: 'system',
+            action:       'jd_broadcast.sla_breached',
+            entity_type:  'x_ffn_jd_broadcast',
+            entity_id:    r.id,
+            new_values:   { jd_id: r.jd_id, agency_tenant_id: r.agency_tenant_id },
+            ip_address:   null,
+            user_agent:   null,
+          }))
+        );
+
+        console.info(`[FFN][sla-monitor] Marked ${ids.length} broadcasts as SLA breached`);
+        return { processed: ids.length };
       };
     } else {
       processor = async (job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {

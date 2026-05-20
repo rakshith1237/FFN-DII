@@ -48,7 +48,7 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
   const { data: { session } } = await supabase.auth.getSession()
 
   const pathname = request.nextUrl.pathname
@@ -62,7 +62,7 @@ export async function proxy(request: NextRequest) {
   if (matchedKey !== undefined) {
     const allowedPersonas = ROUTE_PERSONA_MAP[matchedKey]
     if (allowedPersonas !== undefined) {
-      if (!session) {
+      if (!user) {
         const loginUrl = request.nextUrl.clone()
         loginUrl.pathname = '/auth/login'
         loginUrl.searchParams.set('redirect', pathname)
@@ -78,7 +78,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith('/auth/') && session && personaCode !== null) {
+  if (pathname.startsWith('/auth/') && user && personaCode !== null) {
     const homeRoute = PERSONA_HOME_ROUTES[personaCode]
     if (homeRoute !== undefined && homeRoute !== pathname) {
       const redirectUrl = request.nextUrl.clone()

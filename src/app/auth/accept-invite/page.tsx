@@ -38,7 +38,7 @@ export default function AcceptInvitePage() {
         type: 'invite',
       })
 
-      if (error || !data.session) {
+      if (error || !data.user) {
         setErrorMessage(
           error?.message?.includes('expired')
             ? 'This invite link has expired. Please request a new invitation.'
@@ -50,8 +50,8 @@ export default function AcceptInvitePage() {
 
       setStatus('success')
 
-      const personaCode = data.session.user.user_metadata?.persona_code as string | undefined
-      const email = data.session.user.email ?? ''
+      const personaCode = data.user.user_metadata?.persona_code as string | undefined
+      const email = data.user.email ?? ''
 
       if (!personaCode) {
         router.push(`/auth/setup-password?email=${encodeURIComponent(email)}`)

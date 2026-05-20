@@ -62,12 +62,12 @@ export default function LoginPage() {
       const payload = decodeJwtPayload(data.session.access_token)
       let personaCode = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
 
-      if (personaCode === null || personaCode === 'unprovisioned') {
+      if ((personaCode === null || personaCode === 'unprovisioned') && data.user) {
         const supabaseFallback = createClient()
         const { data: profileData } = await supabaseFallback
           .from('x_ffn_user_profile')
           .select('persona_code')
-          .eq('id', data.session.user.id)
+          .eq('id', data.user.id)
           .maybeSingle()
         personaCode = profileData?.persona_code ?? null
       }
