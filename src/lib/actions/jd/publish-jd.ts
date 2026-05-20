@@ -9,7 +9,6 @@ import { broadcastJD } from './broadcast-jd'
 // GeoRule and ScoringCriterion are re-exported for consumers of this module
 export type { GeoRule, ScoringCriterion }
 
-const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
   process.env['SUPABASE_SERVICE_ROLE_KEY']!,
@@ -54,6 +53,7 @@ export async function publishJD(input: JdDraftInput): Promise<PublishJdState> {
   }
 
   // BR-JD-002: Inclusive language scan via Claude API
+  const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
   if (input.descriptionHtml.trim()) {
     const plainText = input.descriptionHtml.replace(/<[^>]+>/g, ' ').trim()
     try {

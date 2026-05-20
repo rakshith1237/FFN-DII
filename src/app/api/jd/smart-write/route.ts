@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
-const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
-
 const SYSTEM_PROMPTS: Record<string, string> = {
   improve:
     'You are a professional job description writer. Improve the following job description to be compelling, clear, and professional. Return ONLY the improved text in clean HTML (use <p>, <ul>, <li>, <strong> tags only). No preamble.',
@@ -33,6 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!systemPrompt) return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
 
   try {
+    const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
     const response = await anthropic.messages.create({
       model:      'claude-sonnet-4-20250514',
       max_tokens: 2048,
