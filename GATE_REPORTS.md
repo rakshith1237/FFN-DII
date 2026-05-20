@@ -54,3 +54,57 @@ B-028 and B-030 are CLOSED as of commit bee1701.
 Recorded by: QA Lead + Security Engineer
 Approved by: Sai Rakshith (DivIHN Integration Inc.)
 Date: 2026-05-19
+
+---
+
+## Sprint 4 Gate — WBS #23 — 2026-05-20
+**Persona:** QA Lead + Security Engineer
+**Decision:** CONDITIONAL PASS
+**Commit:** 3d3253e
+
+### Passed (6)
+
+| TC | Description | Result | Evidence |
+|---|---|---|---|
+| QUEUE-001 | tier-escalation queue name consistent across broadcastJD + worker | PASS | queues.ts:2, broadcast-jd.ts:160, index.ts:35 |
+| TC-041 | x_ffn_jd_broadcast RLS — 4 policies confirmed, rowsecurity=true | PASS | SQL + pg_policies |
+| TC-042 | escalate_tier job enqueued + processed, BR-DIST-003/004 in worker | PASS | Select-String lines 37, 52, 63 |
+| TC-046 | Decline modal disabled until reason selected | PASS | jd-inbox-client.tsx:321 |
+| TYPESCRIPT | Root 0 errors + Worker 0 errors | PASS | npx tsc --noEmit both roots |
+| CI-033 | GitHub Actions CI #33 green, 53s | PASS | 3d3253e |
+
+### Deferred — B-029 (infrastructure-blocked)
+
+| TC | Description | Blocker |
+|---|---|---|
+| TC-043 | ARM accepts JD — x_ffn_jd_broadcast status=accepted | No A-RM account |
+| TC-044 | ARM assigns A-Rec — x_ffn_jd_assignment record created | No A-RM + A-Rec accounts |
+| TC-045 | A-Rec requirements list — quota + remaining count correct | No A-Rec session |
+| TC-048 | Tier 2 broadcast after Tier 1 hold window expires | No published JD + tier config |
+
+### Failed — B-031 (code-gap)
+
+| TC | Description | Root Cause | Fix |
+|---|---|---|---|
+| TC-047 | SLA monitor job fires — notification sent | sla-monitor BullMQ worker not built in WBS #22 | Build in WBS #24 |
+
+**B-031 Impact:** x_ffn_jd_broadcast.sla_breached never set server-side. Client-side SLA countdown correct. No user-facing regression. P2 severity.
+
+### Bug Register — Final Status
+
+| # | Bug | Status |
+|---|---|---|
+| B-025 | JWT hook no-op | Open |
+| B-027 | 36 vs 37 settings | Open |
+| B-028 | null tenant_id insert | CLOSED — bee1701 |
+| B-029 | Persona-dependent tests deferred | Open — closes WBS #24 |
+| B-030 | HMAC audit log null tenant_id | CLOSED — bee1701 |
+| B-031 | SLA monitor job not built | Open — fix in WBS #24 |
+
+### Gate Condition
+B-029 and B-031 must close before Sprint 4 is fully signed off.
+
+### Sign-off
+Recorded by: QA Lead + Security Engineer
+Approved by: Sai Rakshith (DivIHN Integration Inc.)
+Date: 2026-05-20
