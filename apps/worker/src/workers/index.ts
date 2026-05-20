@@ -11,6 +11,7 @@ type TierEscalationResult =
 type WorkerResult =
   | { processed: boolean | number }
   | { parsed: boolean; inboxId: string }
+  | { scored: boolean; submissionId: string; composite: number; skipped: boolean }
   | TierEscalationResult;
 
 type WorkerInstance = Worker<unknown, WorkerResult>;
@@ -23,6 +24,12 @@ export function createAllWorkers(): WorkerInstance[] {
 
     if (queueName === QUEUES.SCORE_COMPUTE) {
       processor = async (job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+        if (job.name === 'score_submission') {
+          const { submissionId } = job.data as { submissionId: string }
+          const { computeIntelliMatch } = await import('../lib/ai/intellimatch')
+          const result = await computeIntelliMatch(submissionId)
+          return { scored: true, submissionId, composite: result.composite, skipped: result.skipped }
+        }
         if (job.name === 'parse_vms') {
           const { inboxId, tenantId } = job.data as { inboxId: string; tenantId: string };
           const { parseVmsEmail } = await import('../lib/ai/vms-parser');

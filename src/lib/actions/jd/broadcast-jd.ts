@@ -29,29 +29,46 @@ export async function broadcastJD(
 
   if (draftError || !draft) return { error: 'Draft JD not found.' }
 
+  const hmId = draft['assigned_hm_id']
+    ? String(draft['assigned_hm_id'])
+    : (await supabaseAdmin
+        .from('x_ffn_user_profile')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .in('persona_code', ['p_hiring_manager', 'p_super_admin'])
+        .limit(1)
+        .single()
+      ).data?.id ?? tenantId
+
   const { data: canonicalJd, error: jdInsertError } = await supabaseAdmin
     .from('x_ffn_jd')
     .insert({
-      tenant_id:                  tenantId,
-      title:                      String(draft['title'] ?? ''),
-      status:                     'open',
-      vms_source:                 draft['source'] === 'VMS' ? 'email' : 'manual',
-      requisition_id:             draft['requisition_id'] ?? null,
-      description:                draft['description_html'] ?? null,
-      location_city:              draft['location_city'] ?? null,
-      location_state:             draft['location_state'] ?? null,
-      location_country:           draft['location_country'] ?? null,
-      work_arrangement:           draft['work_type'] ?? null,
-      start_date:                 draft['start_date'] ?? null,
-      end_date:                   draft['end_date'] ?? null,
-      bill_rate:                  draft['bill_rate'] ?? null,
-      bill_rate_currency:         draft['currency'] ?? null,
-      required_skills:            draft['skills'] ?? null,
-      assigned_hiring_manager_id: draft['assigned_hm_id'] ?? null,
-      assigned_recruiter_id:      draft['assigned_recruiter_id'] ?? null,
-      intellimatch_threshold:     draft['intellimatch_threshold'] ?? 75,
-      screening_required:         draft['screening_required'] ?? false,
-      published_at:               new Date().toISOString(),
+      tenant_id:                tenantId,
+      number:                   `JD-${Date.now()}`,
+      title:                    String(draft['title'] ?? ''),
+      hm_id:                    hmId,
+      description:              String(draft['description_html'] ?? ''),
+      requirements:             String(draft['skills'] ?? ''),
+      location_city:            String(draft['location_city'] ?? ''),
+      location_type:            (() => {
+        const wt = String(draft['work_type'] ?? 'onsite').toLowerCase()
+        if (wt === 'remote') return 'remote'
+        if (wt === 'hybrid') return 'hybrid'
+        return 'onsite'
+      })(),
+      employment_type:          'contract',
+      currency:                 String(draft['currency'] ?? 'GBP').slice(0, 3),
+      bill_rate_min:            draft['bill_rate'] != null ? parseFloat(String(draft['bill_rate'])) * 0.85 : null,
+      bill_rate_max:            draft['bill_rate'] != null ? parseFloat(String(draft['bill_rate'])) : null,
+      rate_model:               String(draft['rate_model'] ?? 'daily').toLowerCase(),
+      headcount:                typeof draft['headcount'] === 'number' ? draft['headcount'] : 1,
+      target_start_date:        draft['start_date'] ? String(draft['start_date']) : null,
+      vms_source:               draft['source'] === 'VMS' ? 'email' : 'manual',
+      parsed_from_vms_inbox_id: draft['vms_inbox_id'] ? String(draft['vms_inbox_id']) : null,
+      intellimatch_threshold:   typeof draft['intellimatch_threshold'] === 'number'
+        ? draft['intellimatch_threshold'] : 75,
+      status:                   'open',
+      published_at:             new Date().toISOString(),
     })
     .select('id')
     .single()

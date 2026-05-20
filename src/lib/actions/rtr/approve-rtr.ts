@@ -2,6 +2,8 @@
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { Queue } from 'bullmq'
+import IORedis   from 'ioredis'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
 
 const supabaseAdmin = createAdminClient(
@@ -65,7 +67,7 @@ export async function approveRTR(rtrId: string): Promise<ApproveRtrState> {
       partner_tenant_id: String(jd.tenant_id),
       recruiter_id:      String(rtr.recruiter_id),
       submitted_at:      new Date().toISOString(),
-      status:            'submitted',
+      status: 'received',
     })
     .select('id')
     .single()
@@ -123,6 +125,25 @@ export async function approveRTR(rtrId: string): Promise<ApproveRtrState> {
     ip_address:   null,
     user_agent:   null,
   })
+
+  // Enqueue IntelliMatch scoring job
+  let scoreConnection: IORedis | null = null
+  try {
+    scoreConnection = new IORedis(process.env['UPSTASH_REDIS_URL']!, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck:     false,
+    })
+    const scoreQueue = new Queue('SCORE_COMPUTE', { connection: scoreConnection })
+    await scoreQueue.add('score_submission', {
+      submissionId: submission.id,
+      tenantId:     String(rtr.agency_tenant_id),
+    })
+    await scoreQueue.close()
+  } catch (err) {
+    console.error('[FFN][approve-rtr] BullMQ enqueue failed:', (err as Error).message)
+  } finally {
+    if (scoreConnection) await scoreConnection.quit().catch(() => undefined)
+  }
 
   return { success: true, submissionId: submission.id, subNumber }
 }
