@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import TiptapEditor from '@/components/shared/tiptap-editor'
 import AiSmartWritePanel from '@/components/partner/ai-smart-write-panel'
+import { MarketRateWidget } from '@/components/partner/market-rate-widget'
 import { saveDraftJD, type GeoRule, type ScoringCriterion } from '@/lib/actions/jd/save-draft-jd'
 import { publishJD } from '@/lib/actions/jd/publish-jd'
 import type { JdRecord, RecruiterUser } from '@/app/partner/jd/[jdId]/edit/page'
@@ -329,6 +330,11 @@ export default function JdEditForm({ jd, recruiters }: JdEditFormProps) {
                 placeholder="0.00"
                 className="w-full h-10 px-3 text-[14px] border border-[#D1D5DB] rounded-[6px] bg-white text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent disabled:bg-[#F9FAFB] disabled:opacity-60"
               />
+            </div>
+
+            {/* Market Rate Benchmark */}
+            <div className="md:col-span-2">
+              <MarketRateWidget role={title} location={locationCity} />
             </div>
 
             {/* Work Type */}

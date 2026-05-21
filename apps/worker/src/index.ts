@@ -2,7 +2,7 @@ import { createAllWorkers, closeAllWorkers } from './workers/index';
 import { startHealthServer } from './health';
 
 (async function main(): Promise<void> {
-  const workers = createAllWorkers();
+  const workers = await createAllWorkers();
   const server = startHealthServer();
 
   console.log('[FFN Worker Service] Started — 15 queues active');

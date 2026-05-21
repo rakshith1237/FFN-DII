@@ -3,6 +3,7 @@ import connection from '../redis';
 import { QUEUES, QueueName } from '../queues';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { runContractEndAlert } from '../jobs/contractEndAlert';
 
 type TierEscalationResult =
   | { stopped: true; reason: string }
@@ -16,7 +17,7 @@ type WorkerResult =
 
 type WorkerInstance = Worker<unknown, WorkerResult>;
 
-export function createAllWorkers(): WorkerInstance[] {
+export async function createAllWorkers(): Promise<WorkerInstance[]> {
   const workers: WorkerInstance[] = [];
 
   for (const [, queueName] of Object.entries(QUEUES) as Array<[string, QueueName]>) {
@@ -184,6 +185,11 @@ export function createAllWorkers(): WorkerInstance[] {
         console.info(`[FFN][sla-monitor] Marked ${ids.length} broadcasts as SLA breached`);
         return { processed: ids.length };
       };
+    } else if (queueName === QUEUES.CONTRACT_END) {
+      processor = async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+        const { fired, skipped } = await runContractEndAlert()
+        return { processed: fired + skipped }
+      };
     } else {
       processor = async (job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
         console.log(`[FFN Worker] Processing ${queueName}: ${job.id}`);
@@ -203,6 +209,15 @@ export function createAllWorkers(): WorkerInstance[] {
 
     workers.push(worker);
   }
+
+  // Register daily repeatable job for contract-end alerts (7am UTC)
+  const contractEndQueue = new Queue(QUEUES.CONTRACT_END, { connection })
+  await contractEndQueue.add(
+    'contract-end-alert',
+    {},
+    { repeat: { pattern: '0 7 * * *' } }
+  )
+  await contractEndQueue.close()
 
   console.log(`[FFN Worker] ${workers.length} workers started`);
   return workers;

@@ -8,7 +8,11 @@ const supabaseAdmin = createAdminClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-export default async function NewJdPage() {
+export default async function NewJdPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ headcount_id?: string }>
+}) {
   await requirePersona(['p_hiring_manager', 'p_super_admin'])
   const tenantId = await getTenantId()
 
@@ -20,9 +24,37 @@ export default async function NewJdPage() {
     )
   }
 
+  const sp = await searchParams
+  const headcountId = sp.headcount_id as string | undefined
+
+  let title = 'Untitled Job'
+  let targetStartDate: string | null = null
+
+  if (headcountId) {
+    const { data: headcount } = await supabaseAdmin
+      .from('x_ffn_approved_headcount')
+      .select('role, target_start_date')
+      .eq('id', headcountId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
+    if (headcount) {
+      title = headcount.role ?? title
+      targetStartDate = headcount.target_start_date ?? null
+    }
+  }
+
+  const insertPayload: Record<string, unknown> = {
+    tenant_id: tenantId,
+    status:    'draft',
+    title,
+  }
+  if (targetStartDate) insertPayload.target_start_date = targetStartDate
+  if (headcountId)     insertPayload.headcount_id      = headcountId
+
   const { data: jd, error } = await supabaseAdmin
     .from('x_ffn_job_description')
-    .insert({ tenant_id: tenantId, status: 'draft', title: 'Untitled Job' })
+    .insert(insertPayload)
     .select('id')
     .single()
 
