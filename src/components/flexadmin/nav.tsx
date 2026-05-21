@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Building2, Settings, Database,
-  Plug, Cpu, ScrollText, Activity, BarChart3,
+  Plug, Cpu, ScrollText, Activity, BarChart3, ShieldCheck,
 } from 'lucide-react'
 
 type NavItem = {
@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Integrations',       href: '/flexadmin/integrations',icon: Plug,         ready: false },
   { label: 'Jobs',               href: '/flexadmin/jobs',        icon: Cpu,          ready: true  },
   { label: 'Audit Log',          href: '/flexadmin/audit-log',   icon: ScrollText,   ready: true  },
+  { label: 'GDPR',               href: '/flexadmin/gdpr',        icon: ShieldCheck,  ready: true  },
   { label: 'Health',             href: '/flexadmin/health',      icon: Activity,     ready: true  },
   { label: 'Platform Analytics', href: '/flexadmin/analytics',   icon: BarChart3,       ready: false },
 ]

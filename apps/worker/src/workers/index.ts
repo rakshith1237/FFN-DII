@@ -3,7 +3,8 @@ import connection from '../redis';
 import { QUEUES, QueueName } from '../queues';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
-import { runContractEndAlert } from '../jobs/contractEndAlert';
+import { runContractEndAlert } from '../jobs/contractEndAlert'
+import { runGdprErasure } from '../jobs/gdprErasure';
 
 type TierEscalationResult =
   | { stopped: true; reason: string }
@@ -13,7 +14,8 @@ type WorkerResult =
   | { processed: boolean | number }
   | { parsed: boolean; inboxId: string }
   | { scored: boolean; submissionId: string; composite: number; skipped: boolean }
-  | TierEscalationResult;
+  | TierEscalationResult
+  | { erased: number; errors: string[] };
 
 type WorkerInstance = Worker<unknown, WorkerResult>;
 
@@ -215,6 +217,20 @@ export async function createAllWorkers(): Promise<WorkerInstance[]> {
 
     workers.push(worker);
   }
+
+  // GDPR erasure worker — concurrency 1 (irreversible, must not race)
+  const gdprWorker = new Worker<unknown, WorkerResult>(
+    'gdpr_erasure',
+    async (job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+      const data = job.data as Parameters<typeof runGdprErasure>[0]
+      return runGdprErasure(data)
+    },
+    { connection, concurrency: 1 },
+  )
+  gdprWorker.on('error', (err: Error) => {
+    console.error(`[FFN Worker] Error in gdpr_erasure: ${err.message}`)
+  })
+  workers.push(gdprWorker)
 
   // Register daily repeatable job for contract-end alerts (7am UTC)
   const contractEndQueue = new Queue(QUEUES.CONTRACT_END, { connection })
