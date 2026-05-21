@@ -40,12 +40,12 @@ export type RecruiterUser = {
 }
 
 interface EditPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ jdId: string }>
 }
 
 export default async function JdEditPage({ params }: EditPageProps) {
   await requirePersona(['p_hiring_manager', 'p_super_admin'])
-  const { id } = await params
+  const { jdId } = await params
   const tenantId = await getTenantId()
 
   if (!tenantId) {
@@ -60,7 +60,7 @@ export default async function JdEditPage({ params }: EditPageProps) {
     supabaseAdmin
       .from('x_ffn_job_description')
       .select('id, status, source, title, dept_code, engagement_type, start_date, end_date, currency, rate_model, bill_rate, skills, work_type, location_city, location_state, location_country, intellimatch_threshold, screening_required, geo_rules, assigned_recruiter_id, description_html, scoring_criteria')
-      .eq('id', id)
+      .eq('id', jdId)
       .eq('tenant_id', tenantId)
       .single(),
     supabaseAdmin

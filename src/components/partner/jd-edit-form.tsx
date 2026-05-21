@@ -7,7 +7,7 @@ import TiptapEditor from '@/components/shared/tiptap-editor'
 import AiSmartWritePanel from '@/components/partner/ai-smart-write-panel'
 import { saveDraftJD, type GeoRule, type ScoringCriterion } from '@/lib/actions/jd/save-draft-jd'
 import { publishJD } from '@/lib/actions/jd/publish-jd'
-import type { JdRecord, RecruiterUser } from '@/app/partner/jd/[id]/edit/page'
+import type { JdRecord, RecruiterUser } from '@/app/partner/jd/[jdId]/edit/page'
 
 type FormGeoRule    = GeoRule
 type FormCriterion  = ScoringCriterion
