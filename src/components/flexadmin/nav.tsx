@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Building2, Settings, Database,
-  Plug, Clock, FileText, Activity, BarChart3,
+  Plug, Cpu, ScrollText, Activity, BarChart3,
 } from 'lucide-react'
 
 type NavItem = {
@@ -19,11 +19,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',          href: '/flexadmin/dashboard',   icon: LayoutDashboard, ready: true  },
   { label: 'Tenant Management',  href: '/flexadmin/tenants',     icon: Building2,       ready: true  },
   { label: 'Platform Settings',  href: '/flexadmin/settings',    icon: Settings,        ready: false },
-  { label: 'Master Data',        href: '/flexadmin/master-data', icon: Database,        ready: false },
-  { label: 'Integrations',       href: '/flexadmin/integrations',icon: Plug,            ready: false },
-  { label: 'Scheduled Jobs',     href: '/flexadmin/jobs',        icon: Clock,           ready: false },
-  { label: 'Audit Log',          href: '/flexadmin/audit',       icon: FileText,        ready: false },
-  { label: 'Platform Health',    href: '/flexadmin/health',      icon: Activity,        ready: false },
+  { label: 'Master Data',        href: '/flexadmin/master-data', icon: Database,    ready: true  },
+  { label: 'Integrations',       href: '/flexadmin/integrations',icon: Plug,         ready: false },
+  { label: 'Jobs',               href: '/flexadmin/jobs',        icon: Cpu,          ready: true  },
+  { label: 'Audit Log',          href: '/flexadmin/audit-log',   icon: ScrollText,   ready: true  },
+  { label: 'Health',             href: '/flexadmin/health',      icon: Activity,     ready: true  },
   { label: 'Platform Analytics', href: '/flexadmin/analytics',   icon: BarChart3,       ready: false },
 ]
 
