@@ -1,8 +1,10 @@
-import * as docusign from 'docusign-esign'
+﻿const SCOPES = ['signature', 'impersonation']
 
-const SCOPES = ['signature', 'impersonation']
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+function ds() { return require('docusign-esign') as typeof import('docusign-esign') }
 
 export async function getDocuSignToken(): Promise<string> {
+  const docusign       = ds()
   const integrationKey = process.env['DOCUSIGN_INTEGRATION_KEY']!
   const userId         = process.env['DOCUSIGN_USER_ID']!
   const authServer     = process.env['DOCUSIGN_AUTH_SERVER']!
@@ -30,9 +32,8 @@ export type EnvelopeParams = {
   rtrNumber:      string
 }
 
-export async function sendEnvelopeForSigning(
-  params: EnvelopeParams
-): Promise<string> {
+export async function sendEnvelopeForSigning(params: EnvelopeParams): Promise<string> {
+  const docusign  = ds()
   const accountId = process.env['DOCUSIGN_ACCOUNT_ID']!
   const baseUrl   = process.env['DOCUSIGN_BASE_URL']!
 
@@ -41,44 +42,40 @@ export async function sendEnvelopeForSigning(
   apiClient.setBasePath(baseUrl)
   apiClient.addDefaultHeader('Authorization', `Bearer ${token}`)
 
-  // Create document from HTML
-  const document              = new docusign.Document()
-  document.documentBase64     = Buffer.from(params.htmlContent).toString('base64')
-  document.name               = `Right to Represent — ${params.rtrNumber}`
-  document.fileExtension      = 'html'
-  document.documentId         = '1'
+  const document             = new docusign.Document()
+  document.documentBase64    = Buffer.from(params.htmlContent).toString('base64')
+  document.name              = `Right to Represent - ${params.rtrNumber}`
+  document.fileExtension     = 'html'
+  document.documentId        = '1'
 
-  // Create signer
-  const signer         = new docusign.Signer()
-  signer.email         = params.candidateEmail
-  signer.name          = params.candidateName
-  signer.recipientId   = '1'
-  signer.routingOrder  = '1'
+  const signer               = new docusign.Signer()
+  signer.email               = params.candidateEmail
+  signer.name                = params.candidateName
+  signer.recipientId         = '1'
+  signer.routingOrder        = '1'
 
-  // Signature tab (bottom of document)
-  const signHere          = new docusign.SignHere()
-  signHere.documentId     = '1'
-  signHere.pageNumber     = '1'
-  signHere.recipientId    = '1'
-  signHere.tabLabel       = 'Signature'
-  signHere.xPosition      = '100'
-  signHere.yPosition      = '700'
-  signHere.anchorString   = 'Candidate Signature'
-  signHere.anchorXOffset  = '0'
-  signHere.anchorYOffset  = '0'
+  const signHere             = new docusign.SignHere()
+  signHere.documentId        = '1'
+  signHere.pageNumber        = '1'
+  signHere.recipientId       = '1'
+  signHere.tabLabel          = 'Signature'
+  signHere.xPosition         = '100'
+  signHere.yPosition         = '700'
+  signHere.anchorString      = 'Candidate Signature'
+  signHere.anchorXOffset     = '0'
+  signHere.anchorYOffset     = '0'
 
-  const tabs        = new docusign.Tabs()
-  tabs.signHereTabs = [signHere]
-  signer.tabs       = tabs
+  const tabs                 = new docusign.Tabs()
+  tabs.signHereTabs          = [signHere]
+  signer.tabs                = tabs
 
-  // Create envelope
-  const envelope        = new docusign.EnvelopeDefinition()
-  envelope.emailSubject = params.subject
-  envelope.documents    = [document]
-  const recipients      = new docusign.Recipients()
-  recipients.signers    = [signer]
-  envelope.recipients   = recipients
-  envelope.status       = 'sent'
+  const envelope             = new docusign.EnvelopeDefinition()
+  envelope.emailSubject      = params.subject
+  envelope.documents         = [document]
+  const recipients           = new docusign.Recipients()
+  recipients.signers         = [signer]
+  envelope.recipients        = recipients
+  envelope.status            = 'sent'
 
   const envelopesApi = new docusign.EnvelopesApi(apiClient)
   const result       = await envelopesApi.createEnvelope(accountId, {
