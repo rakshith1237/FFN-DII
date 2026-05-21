@@ -54,5 +54,8 @@ const nextConfig: NextConfig = {
     ]
   },
 }
+const nextConfig: NextConfig = {
+  serverExternalPackages: ['docusign-esign'],  
+}
 
 export default nextConfig
