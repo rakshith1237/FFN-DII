@@ -12,7 +12,8 @@
       "Bash(Get-Item src/lib/ai/intellimatch.ts, apps/worker/src/lib/ai/intellimatch.ts)",
       "Bash(Select-Object FullName, Length, LastWriteTime)",
       "Bash(Get-ChildItem -Recurse \"src/app/partner/jd\")",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(xargs grep -l \"Invoice\")"
     ]
   }
 }

@@ -267,4 +267,10 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventDef> = {
     subject: p => `Budget approved: ${String(p.role ?? '')}`,
     body: p => `Your budget request for <strong>${String(p.headcount ?? '')} × ${String(p.role ?? '')}</strong> has been approved.`,
   },
+  PAYMENT_FAILED: {
+    event: 'PAYMENT_FAILED', channel: 'in-app+email',
+    personas: ['p_super_admin','a_super_admin'],
+    subject: () => 'Payment failed — action required',
+    body: p => `Your subscription payment of <strong>${String(p.amount ?? '')}</strong> failed (Invoice ${String(p.invoiceNumber ?? '')}). Please update your billing details to keep your account active.`,
+  },
 }

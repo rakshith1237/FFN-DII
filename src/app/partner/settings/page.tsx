@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getPersonaCode, getTenantId } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import { SettingsEditor } from '@/components/settings/settings-editor'
+import { ManageBillingButton } from '@/components/billing/manage-billing-button'
 
 const SETTINGS_GROUPS = [
   { group: 'Auth',        keys: ['session_timeout_minutes','max_concurrent_sessions','invite_link_expiry_hours'] },
@@ -65,6 +66,7 @@ export default async function PartnerSettingsPage() {
         resolved={resolved}
         tenantId={tenantId}
       />
+      <ManageBillingButton />
     </div>
   )
 }

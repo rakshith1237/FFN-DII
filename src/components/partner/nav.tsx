@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Inbox, Users, Settings,
   FileText, BarChart3, Briefcase,
-  Wallet, Users2, TrendingUp, CalendarDays,
+  Wallet, Users2, TrendingUp, CalendarDays, ShieldCheck,
 } from 'lucide-react'
 
 interface PartnerNavProps {
@@ -18,6 +18,7 @@ type NavItem = {
   href: string
   icon: ElementType
   personas: string[]
+  subItem?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -27,7 +28,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Submissions',  href: '/partner/submissions',  icon: FileText,        personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Team',         href: '/partner/team',         icon: Users,           personas: ['p_super_admin'] },
   { label: 'Analytics',    href: '/partner/analytics',    icon: BarChart3,       personas: ['p_super_admin', 'p_hiring_manager'] },
-  { label: 'Settings',     href: '/partner/settings',     icon: Settings,        personas: ['p_super_admin'] },
+  { label: 'Settings',         href: '/partner/settings',     icon: Settings,     personas: ['p_super_admin'] },
+  { label: 'SSO Configuration', href: '/partner/settings/sso', icon: ShieldCheck,  personas: ['p_super_admin'], subItem: true },
 ]
 
 const WORKFORCE_ITEMS: NavItem[] = [
@@ -39,7 +41,29 @@ const WORKFORCE_ITEMS: NavItem[] = [
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon
-  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+  const isActive = item.subItem
+    ? pathname === item.href
+    : pathname === item.href || (pathname.startsWith(item.href + '/') && !item.subItem)
+
+  if (item.subItem) {
+    return (
+      <Link
+        href={item.href}
+        className={`flex items-center gap-2.5 ml-5 px-3 py-1.5 rounded-[6px] transition-colors group ${
+          isActive
+            ? 'bg-white/10 border-l-[3px] border-[#E8531E] pl-[9px]'
+            : 'hover:bg-white/[0.06] border-l-[3px] border-transparent pl-[9px]'
+        }`}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <Icon size={15} className={`shrink-0 ${isActive ? 'text-white' : 'text-white/55 group-hover:text-white'}`} />
+        <span className={`text-[13px] font-medium truncate ${isActive ? 'text-white' : 'text-white/55 group-hover:text-white'}`}>
+          {item.label}
+        </span>
+      </Link>
+    )
+  }
+
   return (
     <Link
       href={item.href}
