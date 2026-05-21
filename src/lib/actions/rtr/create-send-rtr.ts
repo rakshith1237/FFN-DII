@@ -5,6 +5,7 @@ import { Resend } from 'resend'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
 import { checkRtrDedup } from './check-rtr-dedup'
 import { sendEnvelopeForSigning } from '@/lib/docusign/client'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
@@ -186,6 +187,8 @@ export async function createAndSendRtr(
     ip_address:   null,
     user_agent:   null,
   })
+
+  await fireNotification('RTR_SENT_TO_CANDIDATE', tenantId, { rtrNumber, candidateName })
 
   void resend
 

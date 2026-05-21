@@ -2,6 +2,7 @@
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
@@ -58,6 +59,8 @@ export async function approveOverride(overrideId: string): Promise<ApproveOverri
     entity_id: overrideId, new_values: { submission_id: String(ovr.submission_id) },
     ip_address: null, user_agent: null,
   })
+
+  await fireNotification('OVERRIDE_APPROVED', tenantId, { candidateName: '', overrideNumber: overrideId })
 
   return { success: true }
 }

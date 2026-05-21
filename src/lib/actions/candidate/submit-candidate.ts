@@ -1,6 +1,7 @@
 'use server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getPersonaCode, getTenantId, getUser } from '@/lib/auth/session'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 export type SubmitCandidateInput = {
   jdId:        string
@@ -88,6 +89,13 @@ export async function submitCandidate(
       geo_routing_result: geoRoutingResult,
     },
   })
+
+  await fireNotification(
+    'SUBMISSION_CREATED',
+    String(jd.tenant_id),
+    { candidateName: input.candidateId, jdTitle: input.jdId, agencyName: agencyTenantId },
+    { extraTenantIds: [agencyTenantId] }
+  )
 
   return { error: null, submissionId: submission.id }
 }

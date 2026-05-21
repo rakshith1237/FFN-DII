@@ -2,6 +2,7 @@
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
@@ -68,6 +69,8 @@ export async function rejectOverride(
     entity_id: overrideId, new_values: { rejection_reason_code: rejectionCode },
     ip_address: null, user_agent: null,
   })
+
+  await fireNotification('OVERRIDE_REJECTED', tenantId, { candidateName: '', overrideNumber: overrideId })
 
   return { success: true }
 }

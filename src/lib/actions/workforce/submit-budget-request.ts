@@ -2,6 +2,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getPersonaCode, getTenantId, getUser } from '@/lib/auth/session'
 import { revalidatePath } from 'next/cache'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 export type BudgetRequestInput = {
   role: string
@@ -53,6 +54,8 @@ export async function submitBudgetRequest(input: BudgetRequestInput): Promise<{ 
     entity_id:   data.id,
     new_values:  { role: input.role, headcount_count: input.headcount_count, status: 'submitted' },
   })
+
+  await fireNotification('BUDGET_REQUEST_SUBMITTED', tenantId, { role: input.role, headcount: input.headcount_count })
 
   revalidatePath('/partner/workforce/budget-request')
   return { error: null, id: data.id }

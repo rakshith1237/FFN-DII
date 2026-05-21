@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getPersonaCode, getTenantId, getUser } from '@/lib/auth/session'
 import { Resend } from 'resend'
 import { revalidatePath } from 'next/cache'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 function getResend() { return new Resend(process.env.RESEND_API_KEY!) }
 
@@ -56,6 +57,8 @@ export async function approveBudgetRequest(
         approved_at:       new Date().toISOString(),
       })
     if (hcError) return { error: hcError.message }
+
+    await fireNotification('BUDGET_REQUEST_APPROVED', tenantId, { role: req.role, headcount: req.headcount_count })
 
     // Notify submitter via Resend
     if (req.submitted_by) {

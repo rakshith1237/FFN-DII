@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { fireNotification } from '@/lib/notifications/fire-notification'
 
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
@@ -139,6 +140,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ip_address:   null,
       user_agent:   null,
     })
+
+    await fireNotification('RTR_SIGNED', String(rtr.agency_tenant_id), { rtrNumber: String(rtr.number), candidateName })
   }
 
   if (envelopeStatus === 'voided') {

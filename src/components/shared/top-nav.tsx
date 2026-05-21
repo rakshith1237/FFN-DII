@@ -3,13 +3,15 @@
 import Link from 'next/link'
 import { Bell, MessageSquare, User, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 
 interface TopNavProps {
   email?: string
   orgName?: string
+  userId?: string
 }
 
-export default function TopNav({ orgName }: TopNavProps) {
+export default function TopNav({ orgName, userId }: TopNavProps) {
   async function handleSignOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -37,12 +39,18 @@ export default function TopNav({ orgName }: TopNavProps) {
 
       {/* Right: icons + logout */}
       <div className="flex items-center gap-1">
-        <button
-          className="w-9 h-9 flex items-center justify-center rounded-[6px] text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell size={18} />
-        </button>
+        {userId ? (
+          <div className="w-9 h-9 flex items-center justify-center">
+            <NotificationBell userId={userId} />
+          </div>
+        ) : (
+          <button
+            className="w-9 h-9 flex items-center justify-center rounded-[6px] text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell size={18} />
+          </button>
+        )}
         <button
           className="w-9 h-9 flex items-center justify-center rounded-[6px] text-white/70 hover:text-white hover:bg-white/10 transition-colors"
           aria-label="Messages"
