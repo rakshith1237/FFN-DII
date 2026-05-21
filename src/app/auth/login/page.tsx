@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -67,7 +67,7 @@ export default function LoginPage() {
         const { data: profileData } = await supabaseFallback
           .from('x_ffn_user_profile')
           .select('persona_code')
-          .eq('id', data.user.id)
+          .eq('user_id', data.user.id)
           .maybeSingle()
         personaCode = profileData?.persona_code ?? null
       }
@@ -164,9 +164,10 @@ export default function LoginPage() {
           className="w-full h-11 bg-[#0F2147] text-white text-[14px] font-bold rounded-[6px] hover:bg-[#1a3460] disabled:opacity-60 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 flex items-center justify-center gap-2"
         >
           {isPending && <Loader2 size={16} className="animate-spin" />}
-          {isLocked ? 'Reset Password' : (isPending ? 'Signing in…' : 'Sign In')}
+          {isLocked ? 'Reset Password' : (isPending ? 'Signing inâ€¦' : 'Sign In')}
         </button>
       </form>
     </div>
   )
 }
+

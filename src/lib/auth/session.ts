@@ -1,4 +1,4 @@
-import type { Session, User } from '@supabase/supabase-js'
+﻿import type { Session, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -31,14 +31,14 @@ export async function getPersonaCode(): Promise<string | null> {
   const payload = decodeJwtPayload(session.access_token)
   const fromJwt = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
   if (fromJwt !== null && fromJwt !== 'unprovisioned') return fromJwt
-  // Fallback: JWT hook disabled — query profile directly using verified user
+  // Fallback: JWT hook disabled â€” query profile directly using verified user
   const verifiedUser = await getUser()
   if (!verifiedUser) return null
   const supabase = await createClient()
   const { data } = await supabase
     .from('x_ffn_user_profile')
     .select('persona_code')
-    .eq('id', verifiedUser.id)
+    .eq('user_id', verifiedUser.id)
     .maybeSingle()
   return data?.persona_code ?? null
 }
@@ -71,3 +71,4 @@ export async function requirePersona(allowed: string[]): Promise<void> {
     throw new Error('Forbidden: insufficient persona')
   }
 }
+
