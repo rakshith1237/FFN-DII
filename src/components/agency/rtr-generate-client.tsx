@@ -59,7 +59,7 @@ export default function RtrGenerateClient({
   }
 
   // ── DEDUP BLOCKED ───────────────────────────────────────────────
-  if (dedup.blocked) {
+  if (dedup.isDuplicate) {
     return (
       <div className="max-w-[680px] mx-auto">
         <div className="flex items-center gap-3 mb-6">
@@ -79,11 +79,7 @@ export default function RtrGenerateClient({
                 An RTR for <strong>{candidate.full_name}</strong> and this Job Description
                 already exists within the last 4 months.
               </p>
-              {dedup.existingNumber && (
-                <p className="text-[13px] text-[#92400E] mt-2">
-                  Existing RTR: <strong>{dedup.existingNumber}</strong>
-                </p>
-              )}
+
               <p className="text-[13px] text-[#92400E] mt-2">
                 You must wait 4 months from the original RTR date before submitting again.
               </p>

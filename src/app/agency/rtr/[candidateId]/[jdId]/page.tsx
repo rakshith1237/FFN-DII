@@ -64,7 +64,7 @@ export default async function RtrGeneratePage({
     .single()
 
   // Run dedup check server-side
-  const dedup = await checkRtrDedup(candidateId, jdId, tenantId)
+  const dedup = await checkRtrDedup(candidateId, jdId)
 
   return (
     <RtrGenerateClient

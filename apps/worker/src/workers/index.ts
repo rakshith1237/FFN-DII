@@ -37,6 +37,12 @@ export async function createAllWorkers(): Promise<WorkerInstance[]> {
           await parseVmsEmail(inboxId, tenantId);
           return { parsed: true, inboxId };
         }
+        if (job.name === 'cws_fetch') {
+          const { inboxId, requisitionId } = job.data as { inboxId: string; requisitionId: string };
+          const { cwsFetch } = await import('../lib/cws-client');
+          const ok = await cwsFetch(inboxId, requisitionId);
+          return { processed: ok };
+        }
         console.log(`[FFN Worker] Processing ${queueName}: ${job.id}`);
         return { processed: true };
       };

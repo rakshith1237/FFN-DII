@@ -47,13 +47,11 @@ export async function createAndSendRtr(
   if (!tenantId) return { error: 'Tenant context missing.' }
 
   // Dedup check — BR-RTR-001
-  const dedup = await checkRtrDedup(candidateId, jdId, tenantId)
-  if (dedup.blocked) {
+  const dedup = await checkRtrDedup(candidateId, jdId)
+  if (dedup.isDuplicate) {
     return {
-      blocked:        true,
-      existingRtrId:  dedup.existingRtrId,
-      existingNumber: dedup.existingNumber,
-      error: `BR-RTR-001: An RTR for this candidate and job already exists (${dedup.existingNumber}). Wait 4 months before resubmitting.`,
+      blocked: true,
+      error:   'An RTR for this candidate on this role already exists (created within 4 months).',
     }
   }
 

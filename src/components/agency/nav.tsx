@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Settings,
-  FileText, BarChart3, Briefcase,
+  FileText, BarChart3, Briefcase, SlidersHorizontal,
 } from 'lucide-react'
 
 interface AgencyNavProps {
@@ -26,7 +26,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Submissions',  href: '/agency/submissions',  icon: FileText,        personas: ['a_super_admin', 'a_recruiting_manager', 'a_recruiter'] },
   { label: 'Team',         href: '/agency/team',         icon: Users,           personas: ['a_super_admin'] },
   { label: 'Analytics',    href: '/agency/analytics',    icon: BarChart3,       personas: ['a_super_admin', 'a_recruiting_manager'] },
-  { label: 'Settings',     href: '/agency/settings',     icon: Settings,        personas: ['a_super_admin'] },
+  { label: 'Settings',        href: '/agency/settings',        icon: Settings,          personas: ['a_super_admin'] },
+  { label: 'Scoring Override', href: '/agency/scoring-override', icon: SlidersHorizontal, personas: ['a_recruiting_manager', 'a_super_admin'] },
 ]
 
 export default function AgencyNav({ personaCode }: AgencyNavProps) {

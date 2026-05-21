@@ -1,5 +1,6 @@
 import Anthropic             from '@anthropic-ai/sdk'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { ALL_FACTORS, getDefaultFactorMap } from '@/lib/ai/factors'
 
 const supabaseAdmin = createAdminClient(
   process.env['NEXT_PUBLIC_SUPABASE_URL']!,
@@ -118,6 +119,28 @@ function workTypeScore(
   return 0.7
 }
 
+// ── Agency factor override loader ──────────────────────────────────
+async function getFactorsForAgency(
+  agencyTenantId: string
+): Promise<Record<string, { weight: number; enabled: boolean }>> {
+  const { data: overrides } = await supabaseAdmin
+    .from('x_ffn_agency_factor_override')
+    .select('factor_code, weight, is_enabled')
+    .eq('tenant_id', agencyTenantId)
+
+  const defaults = getDefaultFactorMap()
+  const result: Record<string, { weight: number; enabled: boolean }> = {}
+
+  for (const factor of Object.values(defaults)) {
+    const override = overrides?.find(o => o.factor_code === factor.code)
+    result[factor.code] = {
+      weight:  override ? Number(override.weight) : factor.weight,
+      enabled: override ? override.is_enabled     : factor.enabled,
+    }
+  }
+  return result
+}
+
 // ── Main export ────────────────────────────────────────────────────
 export async function computeIntelliMatch(
   submissionId: string
@@ -139,7 +162,10 @@ export async function computeIntelliMatch(
       skip_reason: `Already scored at ${String(sub.scored_at)}` }
   }
 
-  const [jdRes, candRes, skillsRes, certsRes, factorRes, settingsRes] = await Promise.all([
+  // Load agency-specific factor weights (with overrides)
+  const factorWeights = await getFactorsForAgency(sub.tenant_id ?? '')
+
+  const [jdRes, candRes, skillsRes, certsRes, settingsRes] = await Promise.all([
     supabaseAdmin.from('x_ffn_jd')
       .select('title, requirements, location_city, location_type, bill_rate_max, target_start_date, intellimatch_threshold, tenant_id')
       .eq('id', String(sub.jd_id)).single(),
@@ -158,11 +184,6 @@ export async function computeIntelliMatch(
       .eq('candidate_id', String(sub.candidate_id))
       .eq('tenant_id', String(sub.tenant_id)),
 
-    supabaseAdmin.from('x_ffn_jd_factor_config')
-      .select('factor_code, weight')
-      .eq('jd_id', String(sub.jd_id))
-      .eq('is_active', true),
-
     supabaseAdmin.from('x_ffn_setting')
       .select('key, value')
       .eq('tenant_id', String(sub.partner_tenant_id))
@@ -173,7 +194,6 @@ export async function computeIntelliMatch(
   const cand    = candRes.data
   const skills  = (skillsRes.data ?? []) as unknown as Array<{ x_ffn_skill_taxonomy: { name: string } | null }>
   const certs   = certsRes.data ?? []
-  const factors = factorRes.data ?? []
 
   if (!jd || !cand) {
     return { composite: 0, tf_score: 0, af_score: 0,
@@ -187,110 +207,117 @@ export async function computeIntelliMatch(
 
   const jdReqs = String(jd.requirements ?? jd.title ?? '')
 
-  function getWeight(code: string, defaultVal: number): number {
-    const f = factors.find(x => x.factor_code === code)
-    return f ? Number(f.weight) : defaultVal
+  const settings = settingsRes.data ?? []
+  const tfWeight = parseInt(settings.find(s => s.key === 'technical_fit_dimension_weight_default')?.value ?? '60', 10)
+  const afWeight = parseInt(settings.find(s => s.key === 'auxiliary_fit_dimension_weight_default')?.value ?? '40', 10)
+
+  // Heuristic signals — passed to AI as context
+  const heuristicSignals = {
+    skill_overlap:  Math.round(skillOverlap(jdReqs, skillNames) * 100),
+    seniority:      Math.round(seniorityScore(cand.years_experience, jdReqs) * 100),
+    platform_depth: Math.round(snDepth(jdReqs, skillNames) * 100),
+    location:       Math.round(locationScore(String(jd.location_type ?? ''), cand.location_city, jd.location_city) * 100),
+    availability:   Math.round(availabilityScore(cand.bench_available_from, cand.availability_date, jd.target_start_date) * 100),
+    rate_fit:       Math.round(rateFitScore(cand.rate_expectation_max, jd.bill_rate_max) * 100),
+    work_type:      Math.round(workTypeScore(String(jd.location_type ?? ''), cand.work_authorization) * 100),
+    cert_count:     certs.length,
   }
 
-  // ── Technical Fit ─────────────────────────────────────────────
-  const tfFactors: FactorScore[] = [
-    {
-      code: 'skills_match', label: 'Skills Match', group: 'tf',
-      score: skillOverlap(jdReqs, skillNames),
-      weight: getWeight('skills_match', 20),
-    },
-    {
-      code: 'cert_match', label: 'Certification Match', group: 'tf',
-      score: certs.length > 0 ? Math.min(certs.length / 2, 1) : 0.3,
-      weight: getWeight('cert_match', 20),
-    },
-    {
-      code: 'seniority', label: 'Seniority Level', group: 'tf',
-      score: seniorityScore(cand.years_experience, jdReqs),
-      weight: getWeight('seniority', 20),
-    },
-    {
-      code: 'platform_depth', label: 'Platform Depth', group: 'tf',
-      score: snDepth(jdReqs, skillNames),
-      weight: getWeight('platform_depth', 20),
-    },
-    {
-      code: 'xp_relevance', label: 'Experience Relevance', group: 'tf',
-      score: Math.min((cand.years_experience ?? 0) / 15, 1),
-      weight: getWeight('xp_relevance', 20),
-    },
-  ]
+  // 22-factor context for AI prompt
+  const factorContext = ALL_FACTORS.map(f => ({
+    code:    f.code,
+    label:   f.label,
+    group:   f.group,
+    weight:  factorWeights[f.code]?.weight  ?? f.weight,
+    enabled: factorWeights[f.code]?.enabled ?? f.enabled,
+  }))
 
-  // ── Auxiliary Fit ─────────────────────────────────────────────
-  const afFactors: FactorScore[] = [
-    {
-      code: 'location', label: 'Location Fit', group: 'af',
-      score: locationScore(String(jd.location_type), cand.location_city, jd.location_city),
-      weight: getWeight('location', 20),
-    },
-    {
-      code: 'availability', label: 'Availability', group: 'af',
-      score: availabilityScore(cand.bench_available_from, cand.availability_date, jd.target_start_date),
-      weight: getWeight('availability', 20),
-    },
-    {
-      code: 'rate_fit', label: 'Rate Fit', group: 'af',
-      score: rateFitScore(cand.rate_expectation_max, jd.bill_rate_max),
-      weight: getWeight('rate_fit', 20),
-    },
-    {
-      code: 'work_type', label: 'Work Type Match', group: 'af',
-      score: workTypeScore(String(jd.location_type), cand.work_authorization),
-      weight: getWeight('work_type', 20),
-    },
-    {
-      code: 'references', label: 'References', group: 'af',
-      score: 0.5,
-      weight: getWeight('references', 20),
-    },
-  ]
+  // ── AI Scoring: 22 factors + explanation ─────────────────────────
+  const aiFactorScores: Record<string, number> = {}
+  let explanation = `Candidate evaluated for "${String(jd.title)}" — composite score computed from ${ALL_FACTORS.length} IntelliMatch factors.`
 
+  try {
+    const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
+    const response  = await anthropic.messages.create({
+      model:      'claude-sonnet-4-20250514',
+      max_tokens: 800,
+      system: `You are an IntelliMatch scoring engine. Score a candidate against a job description on the following ${ALL_FACTORS.length} factors.
+Return ONLY valid JSON with two keys:
+- "factors": an object mapping each factor code to a score between 0.0 and 1.0
+- "explanation": a 2-sentence professional summary for Hiring Managers
+
+Factor definitions (code, label, group, weight, enabled):
+${JSON.stringify(factorContext, null, 2)}
+
+Rules: score disabled factors (enabled=false) as 0. Clamp all scores to [0.0, 1.0]. No extra keys.`,
+      messages: [{
+        role: 'user',
+        content: `Score this candidate for JD "${String(jd.title)}":
+
+Candidate:
+- Skills: ${skillNames.join(', ') || 'none listed'}
+- Years of experience: ${cand.years_experience ?? 'unknown'}
+- Certifications: ${certs.map(c => c.cert_name).join(', ') || 'none'}
+- Location: ${cand.location_city ?? 'unknown'}
+- Rate expectation max: ${cand.rate_expectation_max ?? 'unknown'}
+- Work authorization: ${cand.work_authorization ?? 'unknown'}
+- Available from: ${cand.bench_available_from ?? cand.availability_date ?? 'unknown'}
+
+Job Description:
+- Requirements: ${jdReqs.slice(0, 500)}
+- Location: ${jd.location_city ?? 'unknown'} (${jd.location_type ?? 'unknown'})
+- Bill rate max: ${jd.bill_rate_max ?? 'unknown'}
+- Target start: ${jd.target_start_date ?? 'unknown'}
+
+Pre-computed heuristic signals (0–100): ${JSON.stringify(heuristicSignals)}
+Dimension weights: technical_fit=${tfWeight}% auxiliary_fit=${afWeight}%
+
+Return ONLY valid JSON.`,
+      }],
+    })
+    const block = response.content.find(b => b.type === 'text')
+    if (block && block.type === 'text') {
+      const parsed = JSON.parse(block.text.trim()) as { factors?: Record<string, number>; explanation?: string }
+      if (parsed.factors && typeof parsed.factors === 'object') {
+        Object.assign(aiFactorScores, parsed.factors)
+      }
+      if (parsed.explanation && typeof parsed.explanation === 'string') {
+        explanation = parsed.explanation.trim()
+      }
+    }
+  } catch (err) {
+    console.error('[FFN][intellimatch] AI scoring failed:', (err as Error).message)
+  }
+
+  // ── Build 22-factor score array ───────────────────────────────────
   function weightedAvg(factorList: FactorScore[]): number {
     const totalWeight = factorList.reduce((s, f) => s + f.weight, 0)
     if (totalWeight === 0) return 0
     return factorList.reduce((s, f) => s + f.score * f.weight, 0) / totalWeight
   }
 
-  const tfRaw = weightedAvg(tfFactors)
-  const afRaw = weightedAvg(afFactors)
+  const allFactors: FactorScore[] = ALL_FACTORS.map(f => {
+    const fw      = factorWeights[f.code]
+    const enabled = fw?.enabled ?? f.enabled
+    const weight  = fw?.weight  ?? f.weight
+    const raw     = enabled ? (aiFactorScores[f.code] ?? 0.5) : 0
+    return {
+      code:   f.code,
+      label:  f.label,
+      group:  f.group === 'technical_fit' ? 'tf' as const : 'af' as const,
+      score:  Math.min(1, Math.max(0, raw)),
+      weight,
+    }
+  })
 
-  const settings = settingsRes.data ?? []
-  const tfWeight = parseInt(settings.find(s => s.key === 'technical_fit_dimension_weight_default')?.value ?? '60', 10)
-  const afWeight = parseInt(settings.find(s => s.key === 'auxiliary_fit_dimension_weight_default')?.value ?? '40', 10)
+  const tfFactors = allFactors.filter(f => f.group === 'tf' && (factorWeights[f.code]?.enabled ?? true))
+  const afFactors = allFactors.filter(f => f.group === 'af' && (factorWeights[f.code]?.enabled ?? true))
 
-  const tfScore    = Math.round(tfRaw * 100)
-  const afScore    = Math.round(afRaw * 100)
-  const composite  = Math.round(tfRaw * (tfWeight / 100) * 100 + afRaw * (afWeight / 100) * 100)
-  const allFactors = [...tfFactors, ...afFactors]
-
-  const topTF = [...tfFactors].sort((a, b) => (b.score * b.weight) - (a.score * a.weight)).slice(0, 2)
-  const topAF = [...afFactors].sort((a, b) => (b.score * b.weight) - (a.score * a.weight)).slice(0, 2)
-
-  const tfDesc = topTF.map(f => `${f.label}: ${Math.round(f.score * 100)}%`).join(', ')
-  const afDesc = topAF.map(f => `${f.label}: ${Math.round(f.score * 100)}%`).join(', ')
-
-  let explanation = `Technical Fit ${tfScore}/100 driven by ${tfDesc}. Auxiliary Fit ${afScore}/100 driven by ${afDesc}.`
-  try {
-    const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY']! })
-    const response  = await anthropic.messages.create({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: 150,
-      system:     'You write 2-sentence IntelliMatch score explanations for Hiring Managers. Be concise, professional, and insight-driven. No bullet points.',
-      messages: [{
-        role: 'user',
-        content: `Explain this IntelliMatch score for JD "${String(jd.title)}": Technical Fit ${tfScore}/100 (${tfDesc}). Auxiliary Fit ${afScore}/100 (${afDesc}). Composite ${composite}/100.`,
-      }],
-    })
-    const block = response.content.find(b => b.type === 'text')
-    if (block && block.type === 'text') explanation = block.text.trim()
-  } catch (err) {
-    console.error('[FFN][intellimatch] Claude explanation failed:', (err as Error).message)
-  }
+  const tfRaw   = weightedAvg(tfFactors)
+  const afRaw   = weightedAvg(afFactors)
+  const tfScore  = Math.round(tfRaw * 100)
+  const afScore  = Math.round(afRaw * 100)
+  const composite = Math.round(tfRaw * (tfWeight / 100) * 100 + afRaw * (afWeight / 100) * 100)
 
   const snapshot = {
     tf_weight:     tfWeight,
@@ -306,7 +333,7 @@ export async function computeIntelliMatch(
       weight: f.weight,
     })),
     scored_at:     new Date().toISOString(),
-    model_version: 'intellimatch-v0.1',
+    model_version: 'intellimatch-v0.2',
   }
 
   // UPDATE submission — only if not already scored (double-guard)

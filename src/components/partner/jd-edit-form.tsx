@@ -6,6 +6,7 @@ import { Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import TiptapEditor from '@/components/shared/tiptap-editor'
 import AiSmartWritePanel from '@/components/partner/ai-smart-write-panel'
 import { MarketRateWidget } from '@/components/partner/market-rate-widget'
+import { JdGeoRules } from '@/components/partner/jd-geo-rules'
 import { saveDraftJD, type GeoRule, type ScoringCriterion } from '@/lib/actions/jd/save-draft-jd'
 import { publishJD } from '@/lib/actions/jd/publish-jd'
 import type { JdRecord, RecruiterUser } from '@/app/partner/jd/[jdId]/edit/page'
@@ -13,9 +14,20 @@ import type { JdRecord, RecruiterUser } from '@/app/partner/jd/[jdId]/edit/page'
 type FormGeoRule    = GeoRule
 type FormCriterion  = ScoringCriterion
 
+type InitialGeoRule = {
+  id: string
+  rule_type: 'hard_block' | 'soft_warning'
+  geo_scope: 'country' | 'region'
+  geo_value: string
+  reason: string | null
+  is_active: boolean
+}
+
 interface JdEditFormProps {
-  jd:         JdRecord
-  recruiters: RecruiterUser[]
+  jd:               JdRecord
+  recruiters:       RecruiterUser[]
+  tenantId:         string
+  initialGeoRules?: InitialGeoRule[]
 }
 
 function toGeoRules(raw: unknown): FormGeoRule[] {
@@ -28,7 +40,7 @@ function toCriteria(raw: unknown): FormCriterion[] {
   return raw as FormCriterion[]
 }
 
-export default function JdEditForm({ jd, recruiters }: JdEditFormProps) {
+export default function JdEditForm({ jd, recruiters, tenantId, initialGeoRules = [] }: JdEditFormProps) {
   const router = useRouter()
 
   const [title,                 setTitle]                = useState(jd.title)
@@ -567,6 +579,19 @@ export default function JdEditForm({ jd, recruiters }: JdEditFormProps) {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Geo-Routing Rules */}
+            <div className="md:col-span-2 pt-2">
+              <div className="mb-3">
+                <h3 className="text-[13px] font-bold text-[#374151]">Geo-Routing Rules</h3>
+                <p className="text-[12px] text-[#6B7280] mt-0.5">Define which candidate locations are blocked or flagged for this role.</p>
+              </div>
+              <JdGeoRules
+                jdId={jd.id}
+                tenantId={tenantId}
+                initialRules={initialGeoRules as Parameters<typeof JdGeoRules>[0]['initialRules']}
+              />
             </div>
 
           </div>

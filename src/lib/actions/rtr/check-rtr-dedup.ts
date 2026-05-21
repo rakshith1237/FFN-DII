@@ -1,39 +1,28 @@
 'use server'
 
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createAdminClient(
-  process.env['NEXT_PUBLIC_SUPABASE_URL']!,
-  process.env['SUPABASE_SERVICE_ROLE_KEY']!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export type DedupResult = {
-  blocked:         boolean
-  existingRtrId?:  string
-  existingNumber?: string
+  isDuplicate:    boolean
+  agencyTenantId: string | null
 }
 
 export async function checkRtrDedup(
-  candidateId:    string,
-  jdId:           string,
-  agencyTenantId: string
+  candidateId: string,
+  jdId:        string
 ): Promise<DedupResult> {
-  const { data } = await supabaseAdmin
-    .from('x_ffn_rtr')
-    .select('id, number')
-    .eq('candidate_id',     candidateId)
-    .eq('jd_id',            jdId)
-    .eq('agency_tenant_id', agencyTenantId)
-    .neq('status', 'voided')
-    .gte('created_at', new Date(Date.now() - 4 * 30 * 24 * 3600000).toISOString())
-    .limit(1)
-    .single()
+  const db = createAdminClient()
+  const fourMonthsAgo = new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  if (!data) return { blocked: false }
-  return {
-    blocked:        true,
-    existingRtrId:  data.id,
-    existingNumber: data.number,
-  }
+  const { data: existing } = await db
+    .from('x_ffn_rtr')
+    .select('id, agency_tenant_id')
+    .eq('candidate_id', candidateId)
+    .eq('jd_id', jdId)
+    .not('status', 'in', '("expired","voided")')
+    .gt('created_at', fourMonthsAgo)
+    .maybeSingle()
+
+  if (!existing) return { isDuplicate: false, agencyTenantId: null }
+  return { isDuplicate: true, agencyTenantId: existing.agency_tenant_id }
 }

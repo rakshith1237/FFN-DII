@@ -56,7 +56,7 @@ export default async function JdEditPage({ params }: EditPageProps) {
     )
   }
 
-  const [jdResult, recruiterResult] = await Promise.all([
+  const [jdResult, recruiterResult, geoRulesResult] = await Promise.all([
     supabaseAdmin
       .from('x_ffn_job_description')
       .select('id, status, source, title, dept_code, engagement_type, start_date, end_date, currency, rate_model, bill_rate, skills, work_type, location_city, location_state, location_country, intellimatch_threshold, screening_required, geo_rules, assigned_recruiter_id, description_html, scoring_criteria')
@@ -69,6 +69,11 @@ export default async function JdEditPage({ params }: EditPageProps) {
       .eq('tenant_id', tenantId)
       .eq('persona_code', 'p_recruiter')
       .order('full_name', { ascending: true }),
+    supabaseAdmin
+      .from('x_ffn_jd_geo_rule')
+      .select('id, rule_type, geo_scope, geo_value, reason, is_active')
+      .eq('jd_id', jdId)
+      .eq('tenant_id', tenantId),
   ])
 
   if (!jdResult.data) {
@@ -83,6 +88,8 @@ export default async function JdEditPage({ params }: EditPageProps) {
     <JdEditForm
       jd={jdResult.data as JdRecord}
       recruiters={(recruiterResult.data ?? []) as RecruiterUser[]}
+      tenantId={tenantId}
+      initialGeoRules={(geoRulesResult.data ?? []) as Parameters<typeof import('@/components/partner/jd-edit-form').default>[0]['initialGeoRules']}
     />
   )
 }
