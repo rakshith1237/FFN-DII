@@ -21,7 +21,6 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['docusign-esign'],
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },
