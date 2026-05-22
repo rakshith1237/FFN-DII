@@ -159,6 +159,13 @@ export function AnalyticsDashboard() {
           </table>
         )}
       </div>
+
+      <div className="pt-4 border-t border-[#E5E7EB] text-center">
+        <a href="/partner/analytics/market-rate"
+          className="text-sm text-[#0F2147] font-semibold underline hover:no-underline">
+          View Market Rate Intelligence →
+        </a>
+      </div>
     </div>
   )
 }

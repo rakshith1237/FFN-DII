@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Building2, Settings, Database,
-  Plug, Cpu, ScrollText, Activity, BarChart3, ShieldCheck,
+  Plug, Cpu, ScrollText, Activity, BarChart2, ShieldCheck,
 } from 'lucide-react'
 
 type NavItem = {
@@ -25,7 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Audit Log',          href: '/flexadmin/audit-log',   icon: ScrollText,   ready: true  },
   { label: 'GDPR',               href: '/flexadmin/gdpr',        icon: ShieldCheck,  ready: true  },
   { label: 'Health',             href: '/flexadmin/health',      icon: Activity,     ready: true  },
-  { label: 'Platform Analytics', href: '/flexadmin/analytics',   icon: BarChart3,       ready: false },
+  { label: 'Analytics',          href: '/flexadmin/analytics',   icon: BarChart2,       ready: true  },
 ]
 
 export default function FlexAdminNav() {
