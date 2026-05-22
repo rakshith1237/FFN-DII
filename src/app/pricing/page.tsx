@@ -87,6 +87,14 @@ export default function PricingPage() {
           Already have an account?{' '}
           <Link href="/auth/login" className="text-[#0F2147] font-medium hover:underline">Sign in</Link>
         </p>
+        <div className="text-center mt-6">
+          <p className="text-xs text-[#9CA3AF]">
+            By subscribing you agree to our{' '}
+            <Link href="/terms" className="underline hover:text-[#6B7280]">Terms of Service</Link>
+            {' and '}
+            <Link href="/privacy" className="underline hover:text-[#6B7280]">Privacy Policy</Link>.
+          </p>
+        </div>
       </div>
     </div>
   )

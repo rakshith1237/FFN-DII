@@ -172,6 +172,14 @@ export default function LoginPage() {
         New to FlexForceNow?{' '}
         <Link href="/pricing" className="text-[#0F2147] font-medium hover:underline">View pricing</Link>
       </p>
+
+      <div className="mt-6 pt-4 border-t border-[#E5E7EB] text-center">
+        <p className="text-xs text-[#9CA3AF]">
+          <Link href="/privacy" className="hover:text-[#6B7280] underline">Privacy Policy</Link>
+          {' · '}
+          <Link href="/terms" className="hover:text-[#6B7280] underline">Terms of Service</Link>
+        </p>
+      </div>
     </div>
   )
 }
