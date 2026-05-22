@@ -69,6 +69,30 @@ export async function acceptOffer(
     new_values:   { offer_id: offerId, status: 'pre_start' },
   })
 
+  // IR35 auto-trigger for UK candidates (FRD §88)
+  const { data: candidateData } = await db
+    .from('x_ffn_candidate')
+    .select('work_authorization, location_country')
+    .eq('id', offer.candidate_id)
+    .maybeSingle()
+
+  const isUkCandidate =
+    !candidateData?.work_authorization ||
+    candidateData.work_authorization.toLowerCase().includes('uk') ||
+    candidateData.location_country === 'GB'
+
+  if (isUkCandidate) {
+    await db.from('x_ffn_onboarding_task').insert({
+      tenant_id:       offer.tenant_id,
+      placement_id:    placement.id,
+      task_name:       'IR35 Status Determination (SDS)',
+      task_description:'Complete the HMRC IR35 SDS questionnaire before activating this placement.',
+      task_type:       'ir35',
+      status:          'pending',
+      blocks_start:    true,
+    })
+  }
+
   revalidatePath('/agency/offers')
   return { error: null, placementId: placement.id }
 }
