@@ -189,6 +189,12 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventDef> = {
     subject: p => `Offer approved: ${String(p.candidateName ?? '')}`,
     body: p => `The offer for <strong>${String(p.candidateName ?? '')}</strong> has been approved.`,
   },
+  OFFER_DELIVERED: {
+    event: 'OFFER_DELIVERED', channel: 'in-app+email',
+    personas: ['a_recruiting_manager','a_super_admin'],
+    subject: p => `Offer ready for review: ${String(p.candidateName ?? '')}`,
+    body: p => `The offer for <strong>${String(p.candidateName ?? '')}</strong> on <strong>${String(p.jdTitle ?? '')}</strong> has been approved and is ready for your review. Bill rate: ${String(p.billRate ?? '')} ${String(p.currency ?? '')}/day.`,
+  },
   OFFER_REJECTED: {
     event: 'OFFER_REJECTED', channel: 'in-app+email',
     personas: ['p_hiring_manager'],
