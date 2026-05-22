@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Inbox, Users, Settings,
   FileText, BarChart3, BarChart2, Briefcase, FileCheck,
-  Wallet, Users2, TrendingUp, CalendarDays, ShieldCheck, CalendarCheck, Activity, Receipt,
+  Wallet, Users2, TrendingUp, CalendarDays, ShieldCheck, CalendarCheck, Activity, Receipt, Key,
 } from 'lucide-react'
 
 interface PartnerNavProps {
@@ -36,7 +36,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Analytics',    href: '/partner/analytics',    icon: BarChart2,       personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Market Rates', href: '/partner/analytics/market-rate', icon: BarChart2, personas: ['p_super_admin'], subItem: true },
   { label: 'Settings',         href: '/partner/settings',     icon: Settings,     personas: ['p_super_admin'] },
-  { label: 'SSO Configuration', href: '/partner/settings/sso', icon: ShieldCheck,  personas: ['p_super_admin'], subItem: true },
+  { label: 'SSO Configuration', href: '/partner/settings/sso',      icon: ShieldCheck, personas: ['p_super_admin'], subItem: true },
+  { label: 'API Keys',          href: '/partner/settings/api-keys', icon: Key,         personas: ['p_super_admin'], subItem: true },
 ]
 
 const WORKFORCE_ITEMS: NavItem[] = [

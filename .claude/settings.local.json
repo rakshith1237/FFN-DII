@@ -13,7 +13,9 @@
       "Bash(Select-Object FullName, Length, LastWriteTime)",
       "Bash(Get-ChildItem -Recurse \"src/app/partner/jd\")",
       "Bash(Select-Object FullName)",
-      "Bash(xargs grep -l \"Invoice\")"
+      "Bash(xargs grep -l \"Invoice\")",
+      "PowerShell(npm list *)",
+      "PowerShell(cd \"C:\\\\Users\\\\SaiRakshith\\\\FFN-DII\"; npx tsc --noEmit; Write-Host \"Root TS: $LASTEXITCODE\")"
     ]
   }
 }
