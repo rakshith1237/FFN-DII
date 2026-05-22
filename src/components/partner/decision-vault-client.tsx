@@ -5,8 +5,9 @@ import Link from 'next/link'
 import {
   SlidersHorizontal, BarChart2,
   CheckCircle2, AlertCircle,
-  Shield, Loader2, ChevronDown,
+  Shield, Loader2, ChevronDown, Calendar,
 } from 'lucide-react'
+import { InterviewSchedulingModal } from '@/components/partner/interview-scheduling-modal'
 import { formatDistanceToNow } from 'date-fns'
 import { shortlistCandidate }  from '@/lib/actions/submission/shortlist-candidate'
 import { rejectCandidate }     from '@/lib/actions/submission/reject-candidate'
@@ -82,6 +83,11 @@ export default function DecisionVaultClient({ jd, submissions, overrides }: Deci
   const [workTypeFilter,  setWorkTypeFilter]  = useState('')
   const [rateMaxFilter,   setRateMaxFilter]   = useState('')
   const [showFilters,     setShowFilters]     = useState(false)
+  const [interviewModal,  setInterviewModal]  = useState<{
+    submissionId:  string
+    candidateId:   string
+    candidateName: string
+  } | null>(null)
 
   void workTypeFilter
   void setWorkTypeFilter
@@ -470,6 +476,21 @@ export default function DecisionVaultClient({ jd, submissions, overrides }: Deci
                           : <CheckCircle2 size={11} />}
                         {status === 'shortlisted' ? 'Shortlisted' : 'Shortlist'}
                       </button>
+                      {status === 'shortlisted' && (
+                        <button
+                          onClick={() => setInterviewModal({
+                            submissionId:  subId,
+                            candidateId:   String(cand?.['id'] ?? ''),
+                            candidateName: cand
+                              ? `${String(cand['first_name'] ?? '')} ${String(cand['last_name'] ?? '')}`.trim()
+                              : '',
+                          })}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold
+                            text-white bg-green-700 rounded-[6px] hover:bg-green-800 transition-colors">
+                          <Calendar size={11} />
+                          Schedule Interview
+                        </button>
+                      )}
                       <button
                         onClick={() => { setRejectTarget(subId); setRejectNotes('') }}
                         disabled={isPending}
@@ -527,6 +548,19 @@ export default function DecisionVaultClient({ jd, submissions, overrides }: Deci
             </div>
           </div>
         </div>
+      )}
+
+      {/* Interview scheduling modal */}
+      {interviewModal && (
+        <InterviewSchedulingModal
+          open={true}
+          onClose={() => setInterviewModal(null)}
+          submissionId={interviewModal.submissionId}
+          jdId={jd.id}
+          candidateId={interviewModal.candidateId}
+          candidateName={interviewModal.candidateName}
+          jdTitle={jd.title}
+        />
       )}
 
       {/* Override modal */}

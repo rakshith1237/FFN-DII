@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'VMS Inbox',    href: '/partner/vms-inbox',    icon: Inbox,           personas: ['p_recruiter'] },
   { label: 'Requirements', href: '/partner/requirements', icon: Briefcase,       personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Submissions',  href: '/partner/submissions',  icon: FileText,        personas: ['p_super_admin', 'p_hiring_manager'] },
+  { label: 'Interviews',   href: '/partner/interviews',   icon: CalendarDays,    personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Team',         href: '/partner/team',         icon: Users,           personas: ['p_super_admin'] },
   { label: 'Analytics',    href: '/partner/analytics',    icon: BarChart3,       personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Settings',         href: '/partner/settings',     icon: Settings,     personas: ['p_super_admin'] },
