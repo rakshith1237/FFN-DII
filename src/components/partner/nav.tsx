@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Inbox, Users, Settings,
   FileText, BarChart3, BarChart2, Briefcase, FileCheck,
-  Wallet, Users2, TrendingUp, CalendarDays, ShieldCheck, CalendarCheck,
+  Wallet, Users2, TrendingUp, CalendarDays, ShieldCheck, CalendarCheck, Activity, Receipt,
 } from 'lucide-react'
 
 interface PartnerNavProps {
@@ -29,6 +29,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Interviews',   href: '/partner/interviews',   icon: CalendarDays,    personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Offers',       href: '/partner/offers',       icon: FileCheck,       personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Pre-Start',   href: '/partner/pre-start-readiness', icon: CalendarCheck, personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
+  { label: 'Engagement',  href: '/partner/engagement',          icon: Activity,      personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
+  { label: 'Invoices',    href: '/partner/invoices',            icon: Receipt,       personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Team',         href: '/partner/team',         icon: Users,           personas: ['p_super_admin'] },
   { label: 'Analytics',    href: '/partner/analytics',    icon: BarChart2,       personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Settings',         href: '/partner/settings',     icon: Settings,     personas: ['p_super_admin'] },

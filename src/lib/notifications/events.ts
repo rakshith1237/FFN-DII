@@ -195,6 +195,12 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventDef> = {
     subject: p => `Offer ready for review: ${String(p.candidateName ?? '')}`,
     body: p => `The offer for <strong>${String(p.candidateName ?? '')}</strong> on <strong>${String(p.jdTitle ?? '')}</strong> has been approved and is ready for your review. Bill rate: ${String(p.billRate ?? '')} ${String(p.currency ?? '')}/day.`,
   },
+  CO_EMPLOY_WARNING: {
+    event: 'CO_EMPLOY_WARNING', channel: 'in-app+email',
+    personas: ['p_super_admin','p_hiring_manager'],
+    subject: p => `Co-employment risk: ${String(p.candidateName ?? '')}`,
+    body: p => `<strong>${String(p.candidateName ?? '')}</strong> has been engaged for <strong>${String(p.totalDays ?? '')} days</strong> across your organisation. This may trigger co-employment obligations. Please review the engagement.`,
+  },
   OFFER_REJECTED: {
     event: 'OFFER_REJECTED', channel: 'in-app+email',
     personas: ['p_hiring_manager'],

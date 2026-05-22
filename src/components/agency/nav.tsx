@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Settings,
-  FileText, BarChart3, Briefcase, SlidersHorizontal, FileCheck,
+  FileText, BarChart3, Briefcase, SlidersHorizontal, FileCheck, Clock, Receipt,
 } from 'lucide-react'
 
 interface AgencyNavProps {
@@ -25,6 +25,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Bench Index',  href: '/agency/bench',        icon: Users,           personas: ['a_super_admin', 'a_recruiting_manager', 'a_recruiter'] },
   { label: 'Submissions',  href: '/agency/submissions',  icon: FileText,        personas: ['a_super_admin', 'a_recruiting_manager', 'a_recruiter'] },
   { label: 'Offers',       href: '/agency/offers',       icon: FileCheck,       personas: ['a_super_admin', 'a_recruiting_manager'] },
+  { label: 'Timesheets',  href: '/agency/timesheets',   icon: Clock,           personas: ['a_recruiter', 'a_recruiting_manager', 'a_super_admin'] },
+  { label: 'Invoices',    href: '/agency/invoices',     icon: Receipt,         personas: ['a_super_admin', 'a_recruiting_manager'] },
   { label: 'Team',         href: '/agency/team',         icon: Users,           personas: ['a_super_admin'] },
   { label: 'Analytics',    href: '/agency/analytics',    icon: BarChart3,       personas: ['a_super_admin', 'a_recruiting_manager'] },
   { label: 'Settings',        href: '/agency/settings',        icon: Settings,          personas: ['a_super_admin'] },

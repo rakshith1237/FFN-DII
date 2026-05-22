@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { runContractEndAlert } from '../jobs/contractEndAlert'
 import { runGdprErasure } from '../jobs/gdprErasure';
+import { runCoEmploymentAlert } from '../jobs/coEmploymentAlert'
 
 type TierEscalationResult =
   | { stopped: true; reason: string }
@@ -240,6 +241,32 @@ export async function createAllWorkers(): Promise<WorkerInstance[]> {
     { repeat: { pattern: '0 7 * * *' } }
   )
   await contractEndQueue.close()
+
+  // Co-employment alert worker — concurrency 1 (scan all placements, must not race)
+  const coEmployWorker = new Worker<unknown, WorkerResult>(
+    'co_employment_alert',
+    async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+      const result = await runCoEmploymentAlert()
+      return { processed: result.alertsFired }
+    },
+    { connection, concurrency: 1 },
+  )
+  coEmployWorker.on('error', (err: Error) => {
+    console.error(`[FFN Worker] Error in co_employment_alert: ${err.message}`)
+  })
+  workers.push(coEmployWorker)
+
+  // Register daily repeatable job for co-employment alerts (2 AM UTC)
+  const coEmployQueue = new Queue('co_employment_alert', { connection })
+  await coEmployQueue.add(
+    'daily-check',
+    {},
+    {
+      repeat: { pattern: '0 2 * * *' },
+      jobId:  'co-employ-daily',
+    }
+  )
+  await coEmployQueue.close()
 
   console.log(`[FFN Worker] ${workers.length} workers started`);
   return workers;
