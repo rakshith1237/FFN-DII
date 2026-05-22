@@ -29,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Interviews',   href: '/partner/interviews',   icon: CalendarDays,    personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Offers',       href: '/partner/offers',       icon: FileCheck,       personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Pre-Start',   href: '/partner/pre-start-readiness', icon: CalendarCheck, personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
+  { label: 'Placements',  href: '/partner/placements',          icon: Briefcase,     personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Engagement',  href: '/partner/engagement',          icon: Activity,      personas: ['p_super_admin', 'p_hiring_manager', 'p_recruiter'] },
   { label: 'Invoices',    href: '/partner/invoices',            icon: Receipt,       personas: ['p_super_admin', 'p_hiring_manager'] },
   { label: 'Team',         href: '/partner/team',         icon: Users,           personas: ['p_super_admin'] },

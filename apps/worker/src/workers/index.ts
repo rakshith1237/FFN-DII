@@ -6,6 +6,7 @@ import { Resend } from 'resend';
 import { runContractEndAlert } from '../jobs/contractEndAlert'
 import { runGdprErasure } from '../jobs/gdprErasure';
 import { runCoEmploymentAlert } from '../jobs/coEmploymentAlert'
+import { runEngagementEndCheck } from '../jobs/engagementEndCheck'
 
 type TierEscalationResult =
   | { stopped: true; reason: string }
@@ -267,6 +268,32 @@ export async function createAllWorkers(): Promise<WorkerInstance[]> {
     }
   )
   await coEmployQueue.close()
+
+  // Engagement end-check worker — concurrency 1 (concludes placements, must not race)
+  const engagementEndWorker = new Worker<unknown, WorkerResult>(
+    'engagement_end_check',
+    async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+      const result = await runEngagementEndCheck()
+      return { processed: result.processed }
+    },
+    { connection, concurrency: 1 },
+  )
+  engagementEndWorker.on('error', (err: Error) => {
+    console.error(`[FFN Worker] Error in engagement_end_check: ${err.message}`)
+  })
+  workers.push(engagementEndWorker)
+
+  // Register daily repeatable job for engagement end-check (06:00 UTC per FRD §82.3)
+  const engagementEndQueue = new Queue('engagement_end_check', { connection })
+  await engagementEndQueue.add(
+    'daily-end-check',
+    {},
+    {
+      repeat: { pattern: '0 6 * * *' },
+      jobId:  'engagement-end-check-daily',
+    }
+  )
+  await engagementEndQueue.close()
 
   console.log(`[FFN Worker] ${workers.length} workers started`);
   return workers;

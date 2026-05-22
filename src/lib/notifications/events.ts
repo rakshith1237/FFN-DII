@@ -285,4 +285,16 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventDef> = {
     subject: () => 'Payment failed — action required',
     body: p => `Your subscription payment of <strong>${String(p.amount ?? '')}</strong> failed (Invoice ${String(p.invoiceNumber ?? '')}). Please update your billing details to keep your account active.`,
   },
+  ENGAGEMENT_CONCLUDED: {
+    event: 'ENGAGEMENT_CONCLUDED', channel: 'in-app+email',
+    personas: ['p_hiring_manager','p_super_admin','a_recruiting_manager','a_super_admin'],
+    subject: p => `Engagement concluded: ${String(p.candidateName ?? '')}`,
+    body: p => `The engagement for <strong>${String(p.candidateName ?? '')}</strong> on <strong>${String(p.jdTitle ?? '')}</strong> has been concluded (${String(p.conclusionType ?? '')}). ${String(p.offboardingCount ?? '0')} offboarding tasks have been created.`,
+  },
+  TENURE_LIMIT_APPROACHING: {
+    event: 'TENURE_LIMIT_APPROACHING', channel: 'in-app+email',
+    personas: ['p_super_admin','p_hiring_manager'],
+    subject: p => `Tenure threshold approaching: ${String(p.candidateName ?? '')}`,
+    body: p => `<strong>${String(p.candidateName ?? '')}</strong> has accumulated <strong>${String(p.totalDays ?? '')} days</strong> of tenure (threshold: ${String(p.thresholdDays ?? '')} days). A break from re-engagement is recommended.`,
+  },
 }

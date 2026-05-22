@@ -3,6 +3,7 @@ import { getPersonaCode, getTenantId } from '@/lib/auth/session'
 import { redirect }            from 'next/navigation'
 import Link                    from 'next/link'
 import { AlertTriangle }       from 'lucide-react'
+import { PlacementsActions }   from '@/components/partner/placements-actions'
 
 export default async function EngagementPage() {
   const [persona, tenantId] = await Promise.all([getPersonaCode(), getTenantId()])
@@ -134,6 +135,13 @@ export default async function EngagementPage() {
                           className="text-xs text-[#0F2147] underline hover:no-underline">Tasks</Link>
                         <Link href={`/partner/placements/${p.id}/extension`}
                           className="text-xs text-[#0F2147] underline hover:no-underline">Extend</Link>
+                        <PlacementsActions
+                          placementId={p.id}
+                          candidateName={`${p.x_ffn_candidate.first_name} ${p.x_ffn_candidate.last_name}`}
+                          jdTitle={p.x_ffn_jd.title}
+                          endDate={p.end_date}
+                          startDate={p.start_date}
+                        />
                       </div>
                     </td>
                   </tr>
