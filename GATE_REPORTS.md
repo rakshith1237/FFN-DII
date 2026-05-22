@@ -489,3 +489,102 @@ RLS 15/15. TypeScript clean. Privacy and Terms published.
 Recorded by: QA Lead + Security Engineer
 Approved by: Sai Rakshith (DivIHN Integration Inc.)
 Date: 2026-05-22
+
+---
+
+## Sprint 41 Gate — WBS #50 — V2.0 Full — 2026-05-22
+**Persona:** QA Lead + Security Engineer
+**Decision:** CONDITIONAL PASS
+**This is the final WBS gate (WBS #50 of 50)**
+
+### Gate Criteria Results
+
+| Criterion | Method | Result |
+|---|---|---|
+| All V1.1 criteria (G-18 to G-33) code pass | Carried from WBS #44 gate | CONDITIONAL PASS (browser deferred IT block) |
+| Full lifecycle browser demo | Browser required | DEFERRED — IT domain block |
+| 5+ concurrent paying tenants | Business milestone | DEFERRED — 0 real customers |
+| 100+ timesheets per month | Business milestone | DEFERRED — 0 real customers |
+| 100+ invoices per month | Business milestone | DEFERRED — 0 real customers |
+| Co-employment alerts: correct thresholds | Code review + SQL | PASS — co_employment in alert_type CHECK; worker registered |
+| Re-bench automation: concluded candidate searchable | Code review | PASS — bench_reindex BullMQ enqueue in concludePlacement |
+| Tenure summary: cumulative across placements | SQL + code | PASS — UNIQUE(candidate_id, tenant_id) + UPSERT confirmed |
+| SOC 2 Type II in progress | Administrative action | DEFERRED — documents produced (WBS #49); Sai to engage auditor |
+| ISO 27001 Stage 1 completed | Administrative action | DEFERRED — SoA + risk assessment produced; Sai to book audit |
+| Public API: 3 endpoints, auth, rate limit, docs | Code review + SQL | PASS — /v1/candidates (GET+POST) + /v1/placements (GET) live |
+| Analytics dashboards accurate for all tenants | Code review | PASS — 6 analytics routes confirmed |
+| V2.0 Ring 2 migration | Business milestone | DEFERRED — 0 paying customers to migrate |
+| RLS suite 100% pass | vitest run | PASS — 15/15 green (no regression) |
+| TypeScript root 0 errors | tsc --noEmit | PASS — exit 0 |
+| TypeScript worker 0 errors | tsc --noEmit | PASS — exit 0 |
+| Zero unmitigated High security findings | 21_FFN_Pentest_Report.md | PASS — 0 Critical, 0 High |
+
+### Code Architecture Complete — Full WBS Coverage
+
+| WBS Range | Deliverables |
+|---|---|
+| WBS 1-10 | Foundation: schema, RLS, RBAC, auth, VMS email rail, Mailgun |
+| WBS 11-20 | JD lifecycle, AI smart write, bench-first pgvector, XY scoring |
+| WBS 21-30 | Decision Vault, IntelliMatch, override economy, RTR/DocuSign, RTR dedup |
+| WBS 31-35 | Workforce planning, geo-routing, agency tiers, FlexAdmin, settings engine |
+| WBS 36-37 | Notifications (43 events), alerts, BullMQ workers, CI/CD hardening |
+| WBS 38-40 | Stripe billing, SAML SSO, GDPR APIs, ASVS L2, RLS test suite, V1.0 gate |
+| WBS 41-45 | Interview scheduling, scorecard, offer management, placement, pre-start onboarding |
+| WBS 46-47 | Active engagement: timesheets, invoices, co-employment worker, contract extensions, engagement conclusion |
+| WBS 48-49 | Analytics complete (market rate intelligence, FlexAdmin analytics), SOC2/ISO27001 docs, public API v1 |
+| WBS 50 | V2.0 Final Gate |
+
+### Deferred Criteria — Documented
+
+| Criterion | Blocker | Action Required |
+|---|---|---|
+| Full lifecycle demo | IT domain block | IT whitelist hirenowwithflex.us |
+| 5+ paying tenants | No sales yet | Sai: acquire first 5 paying customers |
+| 100+ timesheets/invoices | No paying customers | Closes with paying customers |
+| SOC 2 Type II engagement | Auditor not yet engaged | Sai: contact Prescient Assurance — https://www.prescient-assurance.com |
+| ISO 27001 Stage 1 | Audit not yet booked | Sai: contact LRQA — https://www.lrqa.com or BSI — https://www.bsigroup.com |
+| V2.0 Ring 2 migration | No paying customers | Closes with paying customers |
+
+### Open Bugs Carried Forward
+
+| Bug | Priority | Description | Target |
+|---|---|---|---|
+| B-018 | P2 | Password strength meter (ASVS V2.1.8) | V2.1 Sprint 1 |
+| B-025 | P2 | JWT hook soft mode | V2.1 Sprint 1 |
+| B-032 | P2 | DocuSign Connect HMAC key | V2.1 Sprint 1 |
+| B-033 | P2 | create-send-rtr.ts recruiter_id placeholder | V2.1 Sprint 1 |
+| B-043 | P2 | Mobile responsiveness CSS audit | V2.1 Sprint 1 |
+| B-044 | P3 | DPA PDFs (Resend/Anthropic/OpenAI/DocuSign) | Before V2.0 GA |
+| F-007 | Medium | GDPR export not rate-limited | V2.1 Sprint 1 |
+
+### Security Posture at V2.0
+
+| Check | Result |
+|---|---|
+| OWASP ASVS L2 | 152/169 Met (89.9%), 0 unmitigated High |
+| Penetration test | 0 Critical, 0 High, 1 Medium (accepted) |
+| RLS automated suite | 15/15 PASS — 47+ tables covered |
+| Append-only enforcement | BEFORE DELETE triggers + RLS DELETE=false |
+| GDPR compliance | Erasure API, export API, privacy policy, DPIA, DPA register |
+| Public API | SHA-256 key hash, scope enforcement, 100 req/min rate limit |
+| Audit log | Append-only, 7-year retention, 40+ action types |
+
+### Gate Condition for Full PASS
+
+All deferred criteria close when:
+1. IT whitelists hirenowwithflex.us for browser testing
+2. Sai acquires first paying customers (5 for V2.0 GA target)
+3. SOC 2 auditor engagement confirmed in writing
+4. ISO 27001 Stage 1 booking confirmed
+
+### Platform Completeness at WBS #50
+
+50 of 50 WBS tasks executed. All FRD stages 1-15 code-complete.
+35 custom database tables. 47+ RLS policies. 43 notification events.
+15 BullMQ scheduled jobs. 37 settings keys. 7 persona definitions.
+3 public API endpoints. Full end-to-end contractor lifecycle implemented.
+
+### Sign-off
+Recorded by: QA Lead + Security Engineer
+Approved by: Sai Rakshith (DivIHN Integration Inc.)
+Date: 2026-05-22
