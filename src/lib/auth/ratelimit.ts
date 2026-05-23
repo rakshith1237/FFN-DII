@@ -15,6 +15,12 @@ export const signInRateLimit = new Ratelimit({
   prefix: 'ffn:ratelimit:signin',
 })
 
+export const gdprExportRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(1, '24 h'),
+  prefix: 'ffn:ratelimit:gdpr-export',
+})
+
 export async function checkRateLimit(
   identifier: string,
 ): Promise<{ success: boolean; remaining: number; reset: number }> {

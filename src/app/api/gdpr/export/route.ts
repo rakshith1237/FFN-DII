@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPersonaCode, getUser } from '@/lib/auth/session'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { gdprExportRateLimit } from '@/lib/auth/ratelimit'
 
 const EXPORTABLE_USER_TABLES: Array<{ table: string; userCol: string }> = [
-  { table: 'x_ffn_user_profile',          userCol: 'user_id' },
-  { table: 'x_ffn_audit_log',             userCol: 'actor_id' },
-  { table: 'x_ffn_notification',          userCol: 'user_id' },
-  { table: 'x_ffn_interview_score',       userCol: 'panelist_id' },
-  { table: 'x_ffn_offer_approval',        userCol: 'approver_id' },
+  { table: 'x_ffn_user_profile',    userCol: 'user_id' },
+  { table: 'x_ffn_audit_log',       userCol: 'actor_id' },
+  { table: 'x_ffn_notification',    userCol: 'user_id' },
+  { table: 'x_ffn_interview_score', userCol: 'panelist_id' },
+  { table: 'x_ffn_offer_approval',  userCol: 'approver_id' },
 ]
-
 const EXPORTABLE_CANDIDATE_TABLES: Array<{ table: string }> = [
   { table: 'x_ffn_candidate' },
   { table: 'x_ffn_candidate_skill' },
@@ -33,10 +33,22 @@ export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get('userId')
   if (!userId) return NextResponse.json({ error: 'userId is required' }, { status: 400 })
 
+  // F-007: 1 export per 24 hours per target userId (prevents bulk harvesting)
+  const { success, reset } = await gdprExportRateLimit.limit(`gdpr-export:${userId}`)
+  if (!success) {
+    const retryAfterSec = Math.ceil((reset - Date.now()) / 1000)
+    return new NextResponse('Too Many Requests — GDPR export is limited to once per 24 hours per user.', {
+      status: 429,
+      headers: {
+        'Retry-After':     String(retryAfterSec),
+        'X-RateLimit-Reset': String(reset),
+      },
+    })
+  }
+
   const db = createAdminClient()
   const export_: Record<string, unknown[]> = {}
 
-  // User-scoped tables
   for (const { table, userCol } of EXPORTABLE_USER_TABLES) {
     try {
       const { data } = await db.from(table).select('*').eq(userCol, userId)
@@ -44,14 +56,11 @@ export async function GET(req: NextRequest) {
     } catch { export_[table] = [] }
   }
 
-  // Candidate tables (look up candidate_id from user_id link)
   const { data: candidateLinks } = await db
     .from('x_ffn_candidate')
     .select('id')
     .eq('user_id', userId)
-
   const candidateIds = (candidateLinks ?? []).map(c => c.id)
-
   if (candidateIds.length > 0) {
     for (const { table } of EXPORTABLE_CANDIDATE_TABLES) {
       try {
@@ -61,7 +70,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Update last export timestamp
   await db
     .from('x_ffn_user_profile')
     .update({ gdpr_export_last_at: new Date().toISOString() })
