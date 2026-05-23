@@ -34,7 +34,7 @@ export default async function EngagementPage() {
       ? db.from('x_ffn_invoice').select('placement_id, total_amount, currency, status').in('placement_id', placementIds).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] }),
     placementIds.length > 0
-      ? db.from('x_ffn_engagement_alert').select('placement_id').eq('is_actioned', false).in('placement_id', placementIds)
+      ? db.from('x_ffn_engagement_alert').select('placement_id').eq('actioned', false).in('placement_id', placementIds)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -74,7 +74,7 @@ export default async function EngagementPage() {
         <div>
           <h1 className="text-xl font-bold text-[#0F2147]">Active Engagements</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
-            {rows.length} active · {Object.values(alertCount).reduce((s, n) => s + n, 0)} unactioned alerts
+            {rows.length} active Â· {Object.values(alertCount).reduce((s, n) => s + n, 0)} unactioned alerts
           </p>
         </div>
       </div>
@@ -103,15 +103,15 @@ export default async function EngagementPage() {
                     <td className="py-3 px-3 font-medium text-[#111827] whitespace-nowrap">
                       {p.x_ffn_candidate.first_name} {p.x_ffn_candidate.last_name}
                     </td>
-                    <td className="py-3 px-3 text-[#6B7280] whitespace-nowrap">{p.x_ffn_tenant?.name ?? '—'}</td>
+                    <td className="py-3 px-3 text-[#6B7280] whitespace-nowrap">{p.x_ffn_tenant?.name ?? 'â€”'}</td>
                     <td className="py-3 px-3 text-[#374151]">{p.x_ffn_jd.title}</td>
                     <td className="py-3 px-3 text-[#374151] whitespace-nowrap">{new Date(p.start_date).toLocaleDateString('en-GB')}</td>
-                    <td className="py-3 px-3 text-[#374151] whitespace-nowrap">{p.end_date ? new Date(p.end_date).toLocaleDateString('en-GB') : '—'}</td>
+                    <td className="py-3 px-3 text-[#374151] whitespace-nowrap">{p.end_date ? new Date(p.end_date).toLocaleDateString('en-GB') : 'â€”'}</td>
                     <td className="py-3 px-3 whitespace-nowrap text-[#374151]">{p.currency} {Number(p.bill_rate).toLocaleString()}</td>
                     <td className="py-3 px-3">
                       {ts ? (
                         <span className={`text-xs font-medium ${TS_STYLE[ts.status] ?? 'text-gray-500'}`}>
-                          {ts.status} · {new Date(ts.period_start).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}
+                          {ts.status} Â· {new Date(ts.period_start).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}
                         </span>
                       ) : <span className="text-xs text-[#9CA3AF]">None</span>}
                     </td>
@@ -127,7 +127,7 @@ export default async function EngagementPage() {
                         <span className="flex items-center gap-1 text-xs font-bold text-amber-600">
                           <AlertTriangle size={12} /> {ac}
                         </span>
-                      ) : <span className="text-xs text-[#9CA3AF]">—</span>}
+                      ) : <span className="text-xs text-[#9CA3AF]">â€”</span>}
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
