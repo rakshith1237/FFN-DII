@@ -53,7 +53,7 @@ export async function uploadTaskDocument(
   const bytes       = await file.arrayBuffer()
 
   const { error: uploadError } = await db.storage
-    .from('gdpr')
+    .from('documents')
     .upload(storagePath, bytes, { contentType: file.type, upsert: false })
 
   if (uploadError) return { error: uploadError.message, docId: null }
