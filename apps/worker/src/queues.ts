@@ -14,6 +14,8 @@ export const QUEUES = {
   INVOICE: 'invoice-generate',
   OFFBOARD: 'offboarding-trigger',
   REBENCH: 're-bench',
+  TIMESHEET_CREATE: 'timesheet-create',
+  INVOICE_REMINDER: 'invoice-reminder',
 } as const satisfies Record<string, string>;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

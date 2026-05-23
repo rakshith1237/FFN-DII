@@ -7,6 +7,8 @@ import { runContractEndAlert } from '../jobs/contractEndAlert'
 import { runGdprErasure } from '../jobs/gdprErasure';
 import { runCoEmploymentAlert } from '../jobs/coEmploymentAlert'
 import { runEngagementEndCheck } from '../jobs/engagementEndCheck'
+import { runTimesheetCreate }  from '../jobs/timesheetCreate'
+import { runInvoiceReminder }  from '../jobs/invoiceReminder'
 
 type TierEscalationResult =
   | { stopped: true; reason: string }
@@ -296,6 +298,40 @@ export async function createAllWorkers(): Promise<WorkerInstance[]> {
   await engagementEndQueue.close()
 
   console.log(`[FFN Worker] ${workers.length} workers started`);
+
+  // Timesheet-create worker — weekly Monday 06:00 UTC (FRD §75)
+  const timesheetCreateWorker = new Worker<unknown, WorkerResult>(
+    'timesheet-create',
+    async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+      const result = await runTimesheetCreate()
+      return { processed: result.created }
+    },
+    { connection, concurrency: 1 },
+  )
+  timesheetCreateWorker.on('error', (err: Error) => {
+    console.error('[FFN Worker] Error in timesheet-create: ' + err.message)
+  })
+  workers.push(timesheetCreateWorker)
+  const timesheetCreateQueue = new Queue('timesheet-create', { connection })
+  await timesheetCreateQueue.add('weekly-create', {}, { repeat: { pattern: '0 6 * * 1' }, jobId: 'timesheet-create-weekly' })
+  await timesheetCreateQueue.close()
+
+  // Invoice-reminder worker — daily 08:00 UTC (FRD §76)
+  const invoiceReminderWorker = new Worker<unknown, WorkerResult>(
+    'invoice-reminder',
+    async (_job: Job<unknown, WorkerResult>): Promise<WorkerResult> => {
+      const result = await runInvoiceReminder()
+      return { processed: result.reminded }
+    },
+    { connection, concurrency: 1 },
+  )
+  invoiceReminderWorker.on('error', (err: Error) => {
+    console.error('[FFN Worker] Error in invoice-reminder: ' + err.message)
+  })
+  workers.push(invoiceReminderWorker)
+  const invoiceReminderQueue = new Queue('invoice-reminder', { connection })
+  await invoiceReminderQueue.add('daily-reminder', {}, { repeat: { pattern: '0 8 * * *' }, jobId: 'invoice-reminder-daily' })
+  await invoiceReminderQueue.close()
   return workers;
 }
 
