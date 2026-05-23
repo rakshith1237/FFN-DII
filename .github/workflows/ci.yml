@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci:
-    name: CI — 5 Gates
+    name: CI â€” 5 Gates
     runs-on: ubuntu-latest
 
     steps:
@@ -18,19 +18,19 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
-      - name: 1 — Install (npm ci)
+      - name: 1 â€” Install (npm ci)
         run: npm ci
 
-      - name: 2 — Security audit (SCA)
+      - name: 2 â€” Security audit (SCA)
         run: npm audit --audit-level=high || true
 
-      - name: 3 — TypeScript check
+      - name: 3 â€” TypeScript check
         run: npx tsc --noEmit
 
-      - name: 4 — Unit tests (vitest + RLS suite)
+      - name: 4 â€” Unit tests (vitest + RLS suite)
         run: npx vitest run
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
@@ -38,7 +38,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_APP_URL: http://localhost:3000
 
-      - name: 5 — SAST scan (Semgrep)
+      - name: 5 â€” SAST scan (Semgrep)
         run: |
           python3 -m pip install semgrep --quiet 2>/dev/null || pip install semgrep --quiet
           semgrep --config=.semgrep.yml src/ --error || true
