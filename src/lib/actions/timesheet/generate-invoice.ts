@@ -1,12 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function generateInvoice(params: {
-  timesheetId:  string
-  placementId:  string
-  tenantId:     string
-  periodStart:  string
-  periodEnd:    string
-  hoursRegular: number
+  timesheetId:   string
+  placementId:   string
+  tenantId:      string
+  periodStart:   string
+  periodEnd:     string
+  hoursRegular:  number
   hoursOvertime: number
 }): Promise<{ invoiceId: string | null; error: string | null }> {
   const db = createAdminClient()
@@ -19,21 +19,15 @@ export async function generateInvoice(params: {
 
   if (!placement) return { invoiceId: null, error: 'Placement not found for invoice generation' }
 
-  const hoursTotal = params.hoursRegular + (params.hoursOvertime ?? 0)
-  const amount     = Math.round(hoursTotal * Number(placement.bill_rate) * 100) / 100
-  const taxRate    = 0   // VAT applied externally — stored as 0 for now
-  const taxAmount  = 0
+  const hoursTotal  = params.hoursRegular + (params.hoursOvertime ?? 0)
+  const amount      = Math.round(hoursTotal * Number(placement.bill_rate) * 100) / 100
+  const taxAmount   = 0
   const totalAmount = amount + taxAmount
 
-  // Generate sequential invoice number: INV-YYYY-NNNN
-  const year = new Date().getFullYear()
-  const { count } = await db
-    .from('x_ffn_invoice')
-    .select('*', { count: 'exact', head: true })
-    .like('number', `INV-${year}-%`)
-
-  const seq    = String((count ?? 0) + 1).padStart(4, '0')
-  const number = `INV-${year}-${seq}`
+  // GAP-032: atomic sequence — no race condition (replaces COUNT(*) approach)
+  const { data: seqData, error: seqErr } = await db.rpc('ffn_next_invoice_number')
+  if (seqErr || !seqData) return { invoiceId: null, error: seqErr?.message ?? 'Failed to generate invoice number' }
+  const number = seqData as string
 
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 30)
@@ -44,6 +38,7 @@ export async function generateInvoice(params: {
       tenant_id:        params.tenantId,
       agency_tenant_id: placement.agency_tenant_id,
       placement_id:     params.placementId,
+      timesheet_id:     params.timesheetId,
       number,
       period_start:     params.periodStart,
       period_end:       params.periodEnd,
