@@ -1,0 +1,14 @@
+export const IR35_QUESTIONS: { id: string; text: string }[] = [
+  { id: 'q1',  text: 'Does the client control how, when, and where you carry out the work?' },
+  { id: 'q2',  text: 'Must you personally carry out the work (is substitution prohibited or restricted)?' },
+  { id: 'q3',  text: 'Does the client provide the equipment, tools, or resources needed for the work?' },
+  { id: 'q4',  text: 'Do you bear financial risk if the work is done incorrectly or late?' },
+  { id: 'q5',  text: 'Are you free to work for multiple clients simultaneously during this engagement?' },
+  { id: 'q6',  text: 'Are you integrated into the client organisation (e.g. team meetings, org chart, email address)?' },
+  { id: 'q7',  text: 'Is there a mutual obligation - the client offers work and you must accept it?' },
+  { id: 'q8',  text: 'Does the client set your working hours and days?' },
+  { id: 'q9',  text: 'Are you paid a fixed daily/hourly rate regardless of the volume of work produced?' },
+  { id: 'q10', text: 'Does the contract specify a particular outcome or deliverable rather than ongoing services?' },
+  { id: 'q11', text: 'Does the client provide benefits such as holiday pay, sick pay, or pension contributions?' },
+  { id: 'q12', text: 'Have you been working for this client continuously for more than 2 years?' },
+]

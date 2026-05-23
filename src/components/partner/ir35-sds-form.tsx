@@ -1,6 +1,7 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { submitIr35Sds, IR35_QUESTIONS } from '@/lib/actions/compliance/submit-ir35-sds'
+import { submitIr35Sds } from '@/lib/actions/compliance/submit-ir35-sds'
+import { IR35_QUESTIONS } from '@/lib/constants/ir35-questions'
 
 type Answers = Record<string, 'yes' | 'no' | 'depends'>
 type Existing = { answers: Answers; determination: string; determination_score: number } | null
