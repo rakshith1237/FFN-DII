@@ -7,7 +7,7 @@ type AlertRow = {
   id: string
   alert_type: string
   sent_at: string
-  actioned: boolean
+  is_actioned: boolean
   action_type: string | null
   actioned_at: string | null
   x_ffn_placement: {
@@ -78,8 +78,8 @@ export default async function PartnerAlertsPage() {
     .limit(100)
 
   const rows        = (alerts ?? []) as unknown as AlertRow[]
-  const unactioned  = rows.filter((r) => !r.actioned)
-  const actioned    = rows.filter((r) => r.actioned)
+  const unactioned  = rows.filter((r) => !r.is_actioned)
+  const actioned    = rows.filter((r) => r.is_actioned)
 
   return (
     <div className="p-6 space-y-8">
@@ -114,7 +114,7 @@ export default async function PartnerAlertsPage() {
                           </svg>
                         )}
                         <p className={`text-sm font-bold ${style.titleColor}`}>
-                          {style.label} — {p.x_ffn_jd.title}
+                          {style.label} â€” {p.x_ffn_jd.title}
                         </p>
                       </div>
                       <p className="text-sm text-[#374151]">
@@ -122,17 +122,17 @@ export default async function PartnerAlertsPage() {
                           {p.x_ffn_candidate.first_name} {p.x_ffn_candidate.last_name}
                         </span>
                         {daysActive !== null && (
-                          <span className="text-[#6B7280]"> · {daysActive} days active</span>
+                          <span className="text-[#6B7280]"> Â· {daysActive} days active</span>
                         )}
                         {p.end_date && (
                           <span className="text-[#6B7280]">
-                            {' '}· ends {new Date(p.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {' '}Â· ends {new Date(p.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         )}
                       </p>
                       <p className="text-xs text-[#9CA3AF]">
                         Sent {new Date(alert.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        {' · '}PLC-{p.x_ffn_jd.number}
+                        {' Â· '}PLC-{p.x_ffn_jd.number}
                       </p>
                     </div>
                     <AlertActionButton alertId={alert.id} />

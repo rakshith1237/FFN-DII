@@ -30,7 +30,7 @@ export async function actionAlert(
   const { error } = await db
     .from('x_ffn_engagement_alert')
     .update({
-      actioned:     true,
+      is_actioned:  true,
       action_type:  actionType,
       actioned_at:  new Date().toISOString(),
     })
