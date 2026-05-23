@@ -68,6 +68,12 @@ export async function proxy(request: NextRequest) {
         loginUrl.searchParams.set('redirect', pathname)
         return NextResponse.redirect(loginUrl)
       }
+      // RBAC ENFORCEMENT NOTE (B-025 / T-033 / T-094):
+      // Currently in SOFT MODE: only redirects if personaCode is non-null AND wrong.
+      // If personaCode is null (JWT hook broken on Supabase free tier), user passes through here.
+      // Second enforcement layer: every protected page calls getPersonaCode() with DB fallback.
+      // Switch to STRICT MODE (below) after Supabase Pro upgrade (T-033):
+      //   if (!personaCode || !allowedPersonas.includes(personaCode)) {
       if (personaCode && !allowedPersonas.includes(personaCode)) {
         const homeRoute =
           (personaCode !== null ? PERSONA_HOME_ROUTES[personaCode] : undefined) ?? '/auth/login'
@@ -85,7 +91,7 @@ export async function proxy(request: NextRequest) {
       redirectUrl.pathname = homeRoute
       return NextResponse.redirect(redirectUrl)
     }
-    // No valid home route found — let the user through to auth pages
+    // No valid home route found â€” let the user through to auth pages
     // This handles: unprovisioned users, unknown persona codes, test accounts
   }
 

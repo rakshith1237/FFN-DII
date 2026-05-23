@@ -1,4 +1,4 @@
-﻿import type { Session, User } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -31,7 +31,7 @@ export async function getPersonaCode(): Promise<string | null> {
   const payload = decodeJwtPayload(session.access_token)
   const fromJwt = typeof payload['persona_code'] === 'string' ? payload['persona_code'] : null
   if (fromJwt !== null && fromJwt !== 'unprovisioned') return fromJwt
-  // Fallback: JWT hook disabled â€” query profile directly using verified user
+  // Fallback: JWT hook disabled — query profile directly using verified user
   const verifiedUser = await getUser()
   if (!verifiedUser) return null
   const supabase = await createClient()
@@ -47,16 +47,36 @@ export async function getTenantId(): Promise<string | null> {
   const session = await getSession()
   if (!session) return null
   const payload = decodeJwtPayload(session.access_token)
-  const value = payload['tenant_id']
-  return typeof value === 'string' ? value : null
+  const fromJwt = typeof payload['tenant_id'] === 'string' ? payload['tenant_id'] : null
+  if (fromJwt !== null) return fromJwt
+  // Fallback: JWT hook disabled — query profile directly (B-025)
+  const verifiedUser = await getUser()
+  if (!verifiedUser) return null
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('x_ffn_user_profile')
+    .select('tenant_id')
+    .eq('user_id', verifiedUser.id)
+    .maybeSingle()
+  return data?.tenant_id ?? null
 }
 
 export async function getOrgType(): Promise<string | null> {
   const session = await getSession()
   if (!session) return null
   const payload = decodeJwtPayload(session.access_token)
-  const value = payload['org_type']
-  return typeof value === 'string' ? value : null
+  const fromJwt = typeof payload['org_type'] === 'string' ? payload['org_type'] : null
+  if (fromJwt !== null) return fromJwt
+  // Fallback: JWT hook disabled — derive org_type from tenant record (B-025)
+  const verifiedUser = await getUser()
+  if (!verifiedUser) return null
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('x_ffn_user_profile')
+    .select('tenant_id, x_ffn_tenant!inner(type)')
+    .eq('user_id', verifiedUser.id)
+    .maybeSingle()
+  return (data?.x_ffn_tenant as { type?: string } | null)?.type ?? null
 }
 
 export async function requireAuth(): Promise<User> {
@@ -71,4 +91,3 @@ export async function requirePersona(allowed: string[]): Promise<void> {
     throw new Error('Forbidden: insufficient persona')
   }
 }
-
