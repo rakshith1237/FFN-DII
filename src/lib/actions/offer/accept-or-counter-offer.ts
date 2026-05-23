@@ -55,11 +55,6 @@ export async function acceptOffer(
   await db.from('x_ffn_submission').update({ status: 'offer_made' })
     .eq('jd_id', offer.jd_id).eq('candidate_id', offer.candidate_id)
 
-  await fireNotification('PLACEMENT_CREATED', offer.tenant_id, {
-    candidateName: '',
-    startDate:     offer.start_date,
-  }, { extraTenantIds: [offer.agency_tenant_id] })
-
   await db.from('x_ffn_audit_log').insert({
     tenant_id:    offer.tenant_id,
     actor_id:     user.id,
@@ -73,9 +68,17 @@ export async function acceptOffer(
   // Auto-create all onboarding tasks (FRD §68-73)
   const { data: candidateData } = await db
     .from('x_ffn_candidate')
-    .select('work_authorization, location_country')
+    .select('first_name, last_name, work_authorization, location_country')
     .eq('id', offer.candidate_id)
     .maybeSingle()
+
+  const candidateName = candidateData
+    ? `${String(candidateData.first_name)} ${String(candidateData.last_name)}`
+    : ''
+  await fireNotification('PLACEMENT_CREATED', offer.tenant_id, {
+    candidateName,
+    startDate: offer.start_date,
+  }, { extraTenantIds: [offer.agency_tenant_id] })
 
   await createOnboardingTasks({
     placementId:       placement.id,
