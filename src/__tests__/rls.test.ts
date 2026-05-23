@@ -1,12 +1,12 @@
 /**
  * FFN RLS Automated Test Suite
- * WBS #39 — Security Engineer
- * FRD: Security Framework §3
+ * WBS #39 â€” Security Engineer
+ * FRD: Security Framework Â§3
  *
  * Tests each critical table against:
- *   1. Own-tenant SELECT → rows returned (or empty table, not an error)
- *   2. Cross-tenant SELECT → zero rows
- *   3. DELETE on append-only tables → exception thrown
+ *   1. Own-tenant SELECT â†’ rows returned (or empty table, not an error)
+ *   2. Cross-tenant SELECT â†’ zero rows
+ *   3. DELETE on append-only tables â†’ exception thrown
  *
  * Uses createClient with custom fetch to inject per-persona Authorization headers.
  * Runs against the production Supabase project (read-only, no mutations for append-only test).
@@ -23,7 +23,7 @@ const SERVICE_ROLE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY      ?? ''
 const ACME_TENANT_ID   = 'a1111111-1111-4111-a111-111111111111'
 const TF_TENANT_ID     = 'a2222222-2222-4222-a222-222222222222'
 
-// Admin client — bypasses RLS
+// Admin client â€” bypasses RLS
 function adminClient(): SupabaseClient {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -41,7 +41,7 @@ async function signInAs(email: string, password: string): Promise<SupabaseClient
   return client
 }
 
-// ── Helper: assert cross-tenant zero rows ───────────────
+// â”€â”€ Helper: assert cross-tenant zero rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function assertCrossTenantBlocked(
   client: SupabaseClient,
   table:  string,
@@ -54,11 +54,11 @@ async function assertCrossTenantBlocked(
     .eq('tenant_id', tenantId)
     .limit(5)
 
-  expect(error, `${label} — ${table} should not error`).toBeNull()
-  expect(data?.length ?? 0, `${label} — ${table} cross-tenant rows must be 0`).toBe(0)
+  expect(error, `${label} â€” ${table} should not error`).toBeNull()
+  expect(data?.length ?? 0, `${label} â€” ${table} cross-tenant rows must be 0`).toBe(0)
 }
 
-// ── Test suites ─────────────────────────────────────────
+// â”€â”€ Test suites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('RLS: FlexAdmin sees all tenants', () => {
   it('flex_admin can read x_ffn_tenant rows for both tenants', async () => {
@@ -73,7 +73,7 @@ describe('RLS: Partner P-HM own-tenant access', () => {
   let phm: SupabaseClient
 
   it('P-HM signs in successfully', async () => {
-    phm = await signInAs('phm@acmecorp.demo', 'Demo@12345678')
+    phm = await signInAs('phm@acmecorp.demo', 'Testing@12345678')
     const { data } = await phm.auth.getUser()
     expect(data.user).not.toBeNull()
   })
@@ -86,15 +86,15 @@ describe('RLS: Partner P-HM own-tenant access', () => {
   })
 
   it('P-HM sees ZERO JDs from TalentFirst tenant', async () => {
-    await assertCrossTenantBlocked(phm, 'x_ffn_jd', TF_TENANT_ID, 'P-HM → TalentFirst')
+    await assertCrossTenantBlocked(phm, 'x_ffn_jd', TF_TENANT_ID, 'P-HM â†’ TalentFirst')
   })
 
   it('P-HM sees ZERO submissions from TalentFirst tenant', async () => {
-    await assertCrossTenantBlocked(phm, 'x_ffn_submission', TF_TENANT_ID, 'P-HM → TalentFirst subs')
+    await assertCrossTenantBlocked(phm, 'x_ffn_submission', TF_TENANT_ID, 'P-HM â†’ TalentFirst subs')
   })
 
   it('P-HM sees ZERO candidates from TalentFirst tenant', async () => {
-    await assertCrossTenantBlocked(phm, 'x_ffn_candidate', TF_TENANT_ID, 'P-HM → TalentFirst cands')
+    await assertCrossTenantBlocked(phm, 'x_ffn_candidate', TF_TENANT_ID, 'P-HM â†’ TalentFirst cands')
   })
 })
 
@@ -102,7 +102,7 @@ describe('RLS: Agency A-Rec own-tenant access', () => {
   let arec: SupabaseClient
 
   it('A-Rec signs in successfully', async () => {
-    arec = await signInAs('arec@talentfirst.demo', 'Demo@12345678')
+    arec = await signInAs('arec@talentfirst.demo', 'Testing@12345678')
     const { data } = await arec.auth.getUser()
     expect(data.user).not.toBeNull()
   })
@@ -114,19 +114,19 @@ describe('RLS: Agency A-Rec own-tenant access', () => {
   })
 
   it('A-Rec sees ZERO candidates from Acme Corp', async () => {
-    await assertCrossTenantBlocked(arec, 'x_ffn_candidate', ACME_TENANT_ID, 'A-Rec → Acme cands')
+    await assertCrossTenantBlocked(arec, 'x_ffn_candidate', ACME_TENANT_ID, 'A-Rec â†’ Acme cands')
   })
 
   it('A-Rec sees ZERO JDs from Acme Corp (not broadcast)', async () => {
-    // Only broadcasted JDs visible — not raw tenant JDs
+    // Only broadcasted JDs visible â€” not raw tenant JDs
     const { data } = await arec.from('x_ffn_jd').select('id').eq('tenant_id', ACME_TENANT_ID)
     // JDs broadcast to TF may appear via the broadcast policy; raw Acme-owned JDs should not
-    // We verify x_ffn_jd_broadcast is needed for access — this test confirms RLS is active
+    // We verify x_ffn_jd_broadcast is needed for access â€” this test confirms RLS is active
     expect(data).not.toBeNull() // no error = RLS is enforced
   })
 
   it('A-Rec sees ZERO budget requests from Acme Corp', async () => {
-    await assertCrossTenantBlocked(arec, 'x_ffn_budget_request', ACME_TENANT_ID, 'A-Rec → Acme budget')
+    await assertCrossTenantBlocked(arec, 'x_ffn_budget_request', ACME_TENANT_ID, 'A-Rec â†’ Acme budget')
   })
 })
 
@@ -137,17 +137,17 @@ describe('RLS: Append-only enforcement via SQL', () => {
     const { data, error } = await db
       .from('x_ffn_override_request')
       .select('id')
-      .limit(0) // zero rows — just confirm table is accessible
+      .limit(0) // zero rows â€” just confirm table is accessible
     expect(error).toBeNull()
 
     // Verify via audit: trigger was confirmed in WBS #30 TC-010 SQL gate
-    // (DO block DELETE raised exception — verified in GATE_REPORTS.md)
+    // (DO block DELETE raised exception â€” verified in GATE_REPORTS.md)
     // Here we verify the table structure confirms append-only design
     const { data: cols } = await db
       .from('x_ffn_override_request')
       .select('id, status, created_at')
       .limit(1)
-    // Table accessible + has no updated_at (append-only by design — no UPDATE path)
+    // Table accessible + has no updated_at (append-only by design â€” no UPDATE path)
     expect(cols).not.toBeUndefined()
   })
 
@@ -160,7 +160,7 @@ describe('RLS: Append-only enforcement via SQL', () => {
       .limit(1)
     expect(error).toBeNull()
     // Trigger verified via WBS #30 TC-010 SQL gate (GATE_REPORTS.md)
-    // Service role bypasses RLS but NOT triggers — trigger fires on real rows only.
+    // Service role bypasses RLS but NOT triggers â€” trigger fires on real rows only.
     // The WBS #30 DO block tested on a real row and confirmed exception raised.
   })
 
@@ -181,7 +181,7 @@ describe('RLS: Append-only enforcement via SQL', () => {
 
 describe('RLS: Notification isolation', () => {
   it('A-Rec cannot read notifications of P-HM', async () => {
-    const arec = await signInAs('arec@talentfirst.demo', 'Demo@12345678')
+    const arec = await signInAs('arec@talentfirst.demo', 'Testing@12345678')
     // Get P-HM user_id from admin
     const db = adminClient()
     const { data: phm } = await db
