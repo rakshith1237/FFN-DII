@@ -1,7 +1,7 @@
 import { createAdminClient }   from '@/lib/supabase/admin'
 import { getPersonaCode, getTenantId } from '@/lib/auth/session'
 import { redirect }            from 'next/navigation'
-import { IR35_QUESTIONS }      from '@/lib/actions/compliance/submit-ir35-sds'
+import { IR35_QUESTIONS } from '@/lib/constants/ir35-questions'
 
 const BAND_STYLE = {
   inside:       { bg: '#FEE2E2', color: '#991B1B', label: 'INSIDE IR35' },
