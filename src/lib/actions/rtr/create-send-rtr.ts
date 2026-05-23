@@ -2,7 +2,7 @@
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { requirePersona, getTenantId } from '@/lib/auth/session'
+import { requirePersona, getTenantId, getUser } from '@/lib/auth/session'
 import { checkRtrDedup } from './check-rtr-dedup'
 import { sendEnvelopeForSigning } from '@/lib/docusign/client'
 import { fireNotification } from '@/lib/notifications/fire-notification'
@@ -46,6 +46,8 @@ export async function createAndSendRtr(
   await requirePersona(['a_recruiter'])
   const tenantId = await getTenantId()
   if (!tenantId) return { error: 'Tenant context missing.' }
+  const user = await getUser()
+  if (!user) return { error: 'Unauthorized.' }
 
   // Dedup check — BR-RTR-001
   const dedup = await checkRtrDedup(candidateId, jdId)
@@ -140,7 +142,7 @@ export async function createAndSendRtr(
       candidate_id:     candidateId,
       agency_tenant_id: tenantId,
       template_id:      template?.id ?? null,
-      recruiter_id:     candidateId, // placeholder — update below with actual recruiter
+      recruiter_id:     user.id,
       status:           'draft',
       expires_at:       expiresAt,
     })
@@ -178,7 +180,7 @@ export async function createAndSendRtr(
   // Audit log
   await supabaseAdmin.from('x_ffn_audit_log').insert({
     tenant_id:    tenantId,
-    actor_id:     null,
+    actor_id:     user.id,
     persona_code: 'a_recruiter',
     action:       'rtr.sent',
     entity_type:  'x_ffn_rtr',
