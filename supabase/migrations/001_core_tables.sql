@@ -1,5 +1,5 @@
 -- ============================================================
--- FFN Migration 001: Core Tables — All 37 x_ffn_* Tables
+-- FFN Migration 001: Core Tables â€” All 37 x_ffn_* Tables
 -- FRD: Section 115.3 | 06_FFN_Data_Model.md
 -- PREREQUISITE: 000_helpers_extensions.sql must run first
 -- RLS policies applied separately in 002_rls_policies.sql
@@ -34,7 +34,7 @@ CREATE INDEX idx_tenant_type   ON x_ffn_tenant (type);
 CREATE INDEX idx_tenant_status ON x_ffn_tenant (status);
 
 -- ============================================================
--- 02. x_ffn_setting — 3-tier key-value store
+-- 02. x_ffn_setting â€” 3-tier key-value store
 -- ============================================================
 CREATE TABLE x_ffn_setting (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,7 +56,7 @@ CREATE INDEX idx_setting_user     ON x_ffn_setting (user_id);
 CREATE INDEX idx_setting_tier_key ON x_ffn_setting (tier, key);
 
 -- ============================================================
--- 03. x_ffn_audit_log — APPEND-ONLY (ADR-009)
+-- 03. x_ffn_audit_log â€” APPEND-ONLY (ADR-009)
 -- ============================================================
 CREATE TABLE x_ffn_audit_log (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,7 +79,7 @@ CREATE INDEX idx_audit_entity     ON x_ffn_audit_log (entity_type, entity_id);
 CREATE INDEX idx_audit_created_at ON x_ffn_audit_log (created_at DESC);
 
 -- ============================================================
--- 04. x_ffn_skill_taxonomy — Platform-level (no tenant_id)
+-- 04. x_ffn_skill_taxonomy â€” Platform-level (no tenant_id)
 -- ============================================================
 CREATE TABLE x_ffn_skill_taxonomy (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,7 +100,7 @@ CREATE INDEX idx_skill_taxonomy_active   ON x_ffn_skill_taxonomy (is_active);
 CREATE INDEX idx_skill_taxonomy_parent   ON x_ffn_skill_taxonomy (parent_id);
 
 -- ============================================================
--- 05. x_ffn_functional_domain — Platform-level
+-- 05. x_ffn_functional_domain â€” Platform-level
 -- ============================================================
 CREATE TABLE x_ffn_functional_domain (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,7 +115,7 @@ CREATE TABLE x_ffn_functional_domain (
 CREATE INDEX idx_functional_domain_active ON x_ffn_functional_domain (is_active);
 
 -- ============================================================
--- 06. x_ffn_business_domain — Platform-level
+-- 06. x_ffn_business_domain â€” Platform-level
 -- ============================================================
 CREATE TABLE x_ffn_business_domain (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -165,9 +165,12 @@ CREATE TABLE x_ffn_rtr_template (
 CREATE INDEX idx_rtr_template_tenant ON x_ffn_rtr_template (tenant_id);
 
 -- ============================================================
--- 09. x_ffn_jd — Job Description (central table)
+-- 09. x_ffn_jd â€” Job Description (central table)
 -- ADR-001: hm_id != recruiter_id enforced as CHECK
 -- ============================================================
+-- DUAL-TABLE JD ARCHITECTURE (D-027): x_ffn_jd stores VMS-sourced metadata (raw email payload, confidence scores, VMS fields).
+-- x_ffn_job_description stores the AI-enriched, recruiter-approved JD used for distribution and scoring.
+-- Both link via jd_id. Never merge — VMS metadata must remain append-only.
 CREATE TABLE x_ffn_jd (
   id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id               UUID NOT NULL REFERENCES x_ffn_tenant(id),
@@ -399,7 +402,7 @@ CREATE INDEX idx_bench_index_candidate ON x_ffn_bench_index (candidate_id);
 CREATE INDEX idx_bench_index_current   ON x_ffn_bench_index (is_current);
 
 -- ============================================================
--- 18. x_ffn_rtr — Right to Represent
+-- 18. x_ffn_rtr â€” Right to Represent
 -- ============================================================
 CREATE TABLE x_ffn_rtr (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -476,7 +479,7 @@ CREATE INDEX idx_submission_rtr          ON x_ffn_submission (rtr_id);
 CREATE INDEX idx_submission_submitted_at ON x_ffn_submission (submitted_at DESC);
 
 -- ============================================================
--- 20. x_ffn_override_request — APPEND-ONLY (ADR-005)
+-- 20. x_ffn_override_request â€” APPEND-ONLY (ADR-005)
 -- ============================================================
 CREATE TABLE x_ffn_override_request (
   id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -517,7 +520,7 @@ CREATE INDEX idx_override_status       ON x_ffn_override_request (status);
 CREATE INDEX idx_override_created_at   ON x_ffn_override_request (created_at DESC);
 
 -- ============================================================
--- 21. x_ffn_score_audit — APPEND-ONLY (BR-SCR-005)
+-- 21. x_ffn_score_audit â€” APPEND-ONLY (BR-SCR-005)
 -- ============================================================
 CREATE TABLE x_ffn_score_audit (
   id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),

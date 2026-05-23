@@ -1,5 +1,10 @@
 'use server'
 
+/**
+ * Publishes a JD — writes to BOTH x_ffn_jd (VMS metadata) AND x_ffn_job_description (enriched content).
+ * See D-027: Dual-Table JD Architecture. Never merge these tables.
+ */
+
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { requirePersona, getTenantId } from '@/lib/auth/session'
@@ -45,7 +50,7 @@ export async function publishJD(input: JdDraftInput): Promise<PublishJdState> {
   const saveResult = await saveDraftJD(input)
   if (saveResult.error) return { error: saveResult.error }
 
-  // BR-JD-001: Dual binding check — HM and Recruiter cannot be the same person
+  // BR-JD-001: Dual binding check â€” HM and Recruiter cannot be the same person
   const recruiterId = input.assignedRecruiterId || null
   const hmId        = jd.assigned_hm_id || null
   if (hmId && recruiterId && hmId === recruiterId) {
@@ -62,7 +67,7 @@ export async function publishJD(input: JdDraftInput): Promise<PublishJdState> {
         max_tokens: 512,
         system:     `You are an inclusive language reviewer for job descriptions.
 Scan for non-inclusive language, biased terms, or discriminatory phrases.
-Return ONLY valid JSON — no markdown, no preamble.
+Return ONLY valid JSON â€” no markdown, no preamble.
 Format: { "passed": boolean, "flaggedTerms": string[] }
 If no issues: { "passed": true, "flaggedTerms": [] }`,
         messages: [{ role: 'user', content: plainText }],
@@ -79,12 +84,12 @@ If no issues: { "passed": true, "flaggedTerms": [] }`,
         }
       }
     } catch {
-      // Scan failure is non-blocking — log and continue
-      console.error('[FFN][publish-jd] Inclusive language scan failed — proceeding')
+      // Scan failure is non-blocking â€” log and continue
+      console.error('[FFN][publish-jd] Inclusive language scan failed â€” proceeding')
     }
   }
 
-  // All checks passed — mark scan and delegate publish + broadcast to broadcastJD
+  // All checks passed â€” mark scan and delegate publish + broadcast to broadcastJD
   const { error: scanMarkError } = await supabaseAdmin
     .from('x_ffn_job_description')
     .update({ inclusive_scan_passed: true, updated_at: new Date().toISOString() })
