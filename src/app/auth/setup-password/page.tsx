@@ -1,15 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, CheckCircle2, Circle, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import zxcvbn from 'zxcvbn'
 
 const RULES = [
   { id: 'length',  label: '8 or more characters', test: (p: string) => p.length >= 8 },
   { id: 'upper',   label: '1 uppercase letter',   test: (p: string) => /[A-Z]/.test(p) },
   { id: 'number',  label: '1 number',              test: (p: string) => /[0-9]/.test(p) },
   { id: 'special', label: '1 special character',  test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+] as const
+
+const STRENGTH_LABELS = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'] as const
+const STRENGTH_COLORS = [
+  'bg-[#DC2626]',
+  'bg-[#F97316]',
+  'bg-[#EAB308]',
+  'bg-[#22C55E]',
+  'bg-[#16A34A]',
+] as const
+const STRENGTH_TEXT = [
+  'text-[#DC2626]',
+  'text-[#F97316]',
+  'text-[#EAB308]',
+  'text-[#22C55E]',
+  'text-[#16A34A]',
 ] as const
 
 export default function SetupPasswordPage() {
@@ -29,6 +46,9 @@ export default function SetupPasswordPage() {
   const allRulesPassed = ruleResults.every(r => r.passed)
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0
   const canSubmit = allRulesPassed && passwordsMatch && !isPending
+
+  const strength = useMemo(() => (password.length > 0 ? zxcvbn(password) : null), [password])
+  const score: 0 | 1 | 2 | 3 | 4 = (strength?.score ?? 0) as 0 | 1 | 2 | 3 | 4
 
   useEffect(() => {
     const emailParam = searchParams.get('email')
@@ -59,20 +79,18 @@ export default function SetupPasswordPage() {
         <CheckCircle2 size={32} className="text-[#16A34A]" />
       </div>
       <h2 className="text-[20px] font-bold text-[#0F2147] mb-2">Account Activated</h2>
-      <p className="text-sm text-[#6B7280]">Redirecting to your dashboard…</p>
+      <p className="text-sm text-[#6B7280]">Redirecting to your dashboardâ€¦</p>
     </div>
   )
 
   return (
     <div>
-      {/* Role indicator */}
       <p className="text-[14px] italic text-[#6B7280] text-center mb-6">
         Activating your account
       </p>
 
       <h1 className="text-[20px] font-bold text-[#0F2147] mb-6">Set Your Password</h1>
 
-      {/* Email read-only */}
       {email && (
         <div className="mb-5">
           <p className="text-[13px] font-bold text-[#374151] mb-1">Email Address</p>
@@ -81,7 +99,6 @@ export default function SetupPasswordPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {/* New password */}
         <div>
           <label htmlFor="password" className="block text-[13px] font-bold text-[#374151] mb-1.5">
             New Password <span className="text-[#DC2626]" aria-hidden="true">*</span>
@@ -106,7 +123,24 @@ export default function SetupPasswordPage() {
             </button>
           </div>
 
-          {/* Rules checklist — updates on every keystroke */}
+          {/* Strength bar â€” zxcvbn (ASVS V2.1.8) */}
+          {password.length > 0 && (
+            <div className="mt-2" aria-label={`Password strength: ${STRENGTH_LABELS[score]}`}>
+              <div className="flex gap-1 mb-1">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${i <= score ? STRENGTH_COLORS[score] : 'bg-[#E5E7EB]'}`}
+                  />
+                ))}
+              </div>
+              <p className={`text-[11px] font-medium ${STRENGTH_TEXT[score]}`}>
+                {STRENGTH_LABELS[score]}
+              </p>
+            </div>
+          )}
+
+          {/* Rules checklist */}
           <ul className="mt-3 space-y-1.5" aria-label="Password requirements">
             {ruleResults.map(rule => (
               <li key={rule.id} className="flex items-center gap-2">
@@ -122,7 +156,6 @@ export default function SetupPasswordPage() {
           </ul>
         </div>
 
-        {/* Confirm password */}
         <div>
           <label htmlFor="confirmPassword" className="block text-[13px] font-bold text-[#374151] mb-1.5">
             Confirm Password <span className="text-[#DC2626]" aria-hidden="true">*</span>
@@ -156,7 +189,6 @@ export default function SetupPasswordPage() {
           )}
         </div>
 
-        {/* Server error */}
         {error && (
           <div
             role="alert"
@@ -168,17 +200,15 @@ export default function SetupPasswordPage() {
           </div>
         )}
 
-        {/* Submit — disabled until all rules pass + passwords match */}
         <button
           type="submit"
           disabled={!canSubmit}
           className={`w-full h-11 text-white text-[14px] font-bold rounded-[6px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 flex items-center justify-center gap-2 ${canSubmit ? 'bg-[#0F2147] hover:bg-[#1a3460] cursor-pointer' : 'bg-[#D1D5DB] cursor-not-allowed'}`}
         >
           {isPending && <Loader2 size={16} className="animate-spin" />}
-          {isPending ? 'Activating…' : 'Activate Account'}
+          {isPending ? 'Activatingâ€¦' : 'Activate Account'}
         </button>
 
-        {/* Terms */}
         <p className="text-center text-[12px] italic text-[#9CA3AF]">
           By activating your account, you agree to FlexForceNow{' '}
           <span className="underline cursor-pointer">Terms of Service</span> and{' '}

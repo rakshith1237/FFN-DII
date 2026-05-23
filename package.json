@@ -25,6 +25,7 @@
         "@tiptap/pm": "^3.23.5",
         "@tiptap/react": "^3.23.5",
         "@tiptap/starter-kit": "^3.23.5",
+        "@types/zxcvbn": "^4.4.5",
         "@upstash/ratelimit": "^2.0.8",
         "@upstash/redis": "^1.38.0",
         "bullmq": "^5.76.10",
@@ -42,7 +43,8 @@
         "resend": "^6.12.3",
         "stripe": "^22.1.1",
         "tailwindcss-animate": "^1.0.7",
-        "zod": "^4.4.3"
+        "zod": "^4.4.3",
+        "zxcvbn": "^4.4.2"
     },
     "devDependencies": {
         "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
